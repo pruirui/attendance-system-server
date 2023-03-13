@@ -5,8 +5,9 @@ from db_config import app
 
 # user模块
 from routes.user import user
+from routes.HR import HR
 app.register_blueprint(user,url_prefix="/user")
-
+app.register_blueprint(HR,url_prefix="/HR")
 
 @app.route('/')
 def ping():

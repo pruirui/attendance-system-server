@@ -1,6 +1,6 @@
 from operation.user import User_operation
 from utils.data_process import Class_To_Data,query2dict
-from db_config import session
+# from db_config import session
 
 def User_MakeUpClock(username,time,content,state):
     u_o = User_operation()
@@ -20,6 +20,12 @@ def User_Leave(username,time,content,state):
 def User_BaseData(username):
     u_o = User_operation()
     data = u_o._queryUserById(username)
+    data = query2dict(data)
+    return data
+
+def Alluser_ClockData():
+    u_o = User_operation()
+    data = u_o._alUserClockData()
     data = query2dict(data)
     return data
 

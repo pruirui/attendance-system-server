@@ -25,7 +25,7 @@ class User_operation():
         return user
     
     def _userUpdate(self,username,password):
-        user = Users.query.filter(Users.username == "lee").first()
+        user = Users.query.filter(Users.username == username).first()
         if user:
             print("found!")
             user.password = password
@@ -43,7 +43,11 @@ class User_operation():
     def _userClockData(self,username):
         data_list = User_clocks.query.filter_by(username=username).all()
         return data_list
-
+    
+    def _alUserClockData(self):
+        data_list = User_clocks.query.all()
+        return data_list
+    
     def _userLeave(self,username,time,content,state):  #请假
         new_data = User_applications(username=username,applyTime=time,content=content,state=state)
         session.add(new_data)

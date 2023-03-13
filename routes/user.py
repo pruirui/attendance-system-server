@@ -44,7 +44,13 @@ def userBaseData():
     username = "lee"
     data = User_BaseData(username)
     print(data)
-    return "ok"
+    return jsonify(data)
+
+@user.route('/allUserClockData',methods = ['GET','POST'])
+def allUserClockData():
+    data = Alluser_ClockData()
+    print(data[0])
+    return jsonify(data)
 
 @user.route('/userClockData',methods = ['GET','POST'])
 def userClockData():
