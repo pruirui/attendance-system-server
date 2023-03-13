@@ -13,6 +13,7 @@ DB_URL = f'mysql+pymysql://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{DB}'
 # 数据库配置     
 app = Flask(__name__)
 app.config["JSON_AS_ASCII"] = False
+app.config["UPLOAD_FOLDER"] = '/images'
 app.config['SECRET_KEY'] = 'hard to guess'
                                                      #用户名：密码@ip：port/数据库名字
 app.config['SQLALCHEMY_DATABASE_URI'] = DB_URL

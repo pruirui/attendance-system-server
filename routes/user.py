@@ -10,9 +10,11 @@ def userUpdate():
     username = 'lee'
     data = json.loads(request.data)
     print(data)
-    password = data['password']
-    print(password)
-    User_update(username,password)
+    # password = data['password']
+    # phone = data['phone']
+    # if data['aa'] is None:
+        # print("none")
+    User_update(username,data)
     return jsonify({
                 "code":1,
                 "msg":"修改成功!!!"
@@ -20,29 +22,38 @@ def userUpdate():
 
 @user.route('/makeUpClock',methods = ['GET','POST'])
 def userMakeUpClock():
-    username = 'lee'
+    uid = 1
     dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    User_MakeUpClock(username,dateTmp,"补打卡","未处理")
-    return "ok"
+    User_MakeUpClock(uid,dateTmp,"补打卡","未处理")
+    return jsonify({
+            "code":1,
+            "msg":"申请成功，请等待审核！"
+        })
 
 @user.route('/workOverTime',methods = ['GET','POST'])
 def userWorkOverTime():
-    username = 'lee'
+    uid = 1
     dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    User_WorkOverTime(username,dateTmp,"加班","未处理")
-    return "ok"
+    User_WorkOverTime(uid,dateTmp,"加班","未处理")
+    return jsonify({
+            "code":1,
+            "msg":"申请成功，请等待审核！"
+        })
 
 @user.route('/leave',methods = ['GET','POST'])
 def userLeave():
-    username = 'lee'
+    uid = 1
     dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    User_Leave(username,dateTmp,"请假","未处理")
-    return "ok"
+    User_Leave(uid,dateTmp,"请假","未处理")
+    return jsonify({
+            "code":1,
+            "msg":"申请成功，请等待审核！"
+        })
 
 @user.route('/userBaseData',methods = ['GET','POST'])
 def userBaseData():
-    username = "lee"
-    data = User_BaseData(username)
+    phone = '17365691811'
+    data = User_BaseData(phone)
     print(data)
     return jsonify(data)
 
@@ -54,19 +65,25 @@ def allUserClockData():
 
 @user.route('/userClockData',methods = ['GET','POST'])
 def userClockData():
-    username = "lee"
-    data = User_ClockData(username)
+    uid = 1
+    data = User_ClockData(uid)
     print(data[0])
     return jsonify(data)
 
 @user.route('/clockOut',methods = ['GET','POST'])
 def clockOut():
-    username = "lee"
+    uid = 1
     dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    datefront = '2023-03-11 21:00:00'
-    dateend = '2023-03-11 23:59:59'
-    if dateTmp < dateend and dateTmp > datefront:
-        User_clock(username,dateTmp,"签退")
+    data = User_queryClockBy(uid,dateTmp[:11],"签退")
+    if data is not None:
+        return jsonify({
+            "code":-1,
+            "msg":"今日已打卡，请勿重复打卡！"
+        })
+    datefront = datetime.time(21,0,0).strftime('%H:%M:%S')
+    dateend = datetime.time(23,0,0).strftime('%H:%M:%S')
+    if dateTmp[11:] < dateend and dateTmp[11:] > datefront:
+        User_clock(uid,dateTmp,"签退")
         return jsonify({
                 "code":1,
                 "msg":"恭喜你,打卡成功!!!"
@@ -79,13 +96,23 @@ def clockOut():
 
 @user.route('/clockIn',methods = ['GET','POST'])
 def clockIn():
-    username = "lee"
+    # username = "lee"
+    uid = 1
     dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    print(dateTmp)
-    datefront = '2023-03-11 6:00:00'
-    dateend = '2023-03-11 8:00:00'
-    if dateTmp < dateend and dateTmp > datefront:
-        User_clock(username,dateTmp,"签到")
+    data = User_queryClockBy(uid,dateTmp[:11],"签到")
+    if data is not None:
+        return jsonify({
+            "code":-1,
+            "msg":"今日已打卡，请勿重复打卡！"
+        })
+    print(dateTmp[11:])
+    datefront = datetime.time(8,0,0).strftime('%H:%M:%S')
+    dateend = datetime.time(10,0,0).strftime('%H:%M:%S')
+    if(dateTmp[11:] > datefront):
+        print("ok")
+    print(type('!!!'))
+    if dateTmp[11:] < dateend and dateTmp[11:] > datefront:
+        User_clock(uid,dateTmp,"签到")
         return jsonify({
                 "code":1,
                 "msg":"恭喜你,打卡成功!!!"
@@ -100,7 +127,7 @@ def clockIn():
 def list():
     # api的业务逻辑方法
     data = User_list()
-    print(type(data))
+    print((data))
     return jsonify(data)
 
 @user.route("/userInfo", methods=["GET", "POST"])
@@ -126,20 +153,21 @@ def user_info():
     })
 
 
-@user.route('/login',methods=['GET'])
+@user.route('/login',methods=['GET','POST'])
 def login():
-    name = request.args['username']
-    pwd = request.args['password']
-    data = User_login(name,pwd)
+    data = json.loads(request.data)
+    phone = data['phone']
+    pwd = data['password']
+    data = User_login(phone,pwd)
 
     if data:
         return jsonify({
-            "code":-1,
+            "code":0,
             "msg":data
         })
     else:
         return jsonify({
-            "code":0,
+            "code":1,
             "data":{
                 "token":666666
             }
@@ -152,7 +180,7 @@ def reg():
     data = json.loads(request.data)
 
     #判断用户是否存在
-    cnt = User_isExisted(data['username'])
+    cnt = User_isExisted(data['phone'])
     print(type(cnt))
     if cnt:
        return ({
@@ -161,11 +189,11 @@ def reg():
         })
     else :      # 直接注册
         data = User_reg({
-            "username":data["username"],
+            "phone":data["phone"],
             "password":data["password"]
         })
         print(data)
         return ({
-                "code": 200, 
+                "code": 0, 
                 "msg": "恭喜，注册成功！"
             })

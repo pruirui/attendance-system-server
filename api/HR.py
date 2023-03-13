@@ -1,6 +1,11 @@
 from operation.HR import HR_operation
 from utils.data_process import query2dict
 
+def HR_addUserFace(uid,userFacePath,faceEmbedding,createTime,updateTime):
+    H_o = HR_operation()
+    data = H_o._addUserFace(uid,userFacePath,faceEmbedding,createTime,updateTime)
+    return data
+
 def HR_createDpartment(departmentName,time,description,HRname,state):
     HR_o = HR_operation()
     data = HR_o._createDepartment(departmentName,time,description,HRname,state)

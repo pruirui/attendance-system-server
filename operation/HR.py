@@ -1,4 +1,4 @@
-from models.HR import HR_Department,HR_SysConfig
+from models.HR import HR_Department,HR_SysConfig,HR_UserFace
 from db_config import db_init as db
 from db_config import session
 
@@ -29,3 +29,9 @@ class HR_operation():
         # tmp = str(config[1])
         print(config)
         return config
+    
+    def _addUserFace(self,uid,userFacePath,faceEmbedding,createTime,updateTime):
+        new_data = HR_UserFace(id=uid,userFacePath=userFacePath,faceEmbedding=faceEmbedding,\
+                               createTime=createTime,updateTime=updateTime)
+        session.add(new_data)
+        session.commit()

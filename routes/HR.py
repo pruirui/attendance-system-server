@@ -2,7 +2,30 @@ from flask import Blueprint,request,jsonify
 from api.HR import *
 import json
 import datetime
+import os
 HR = Blueprint('HR',__name__)
+
+@HR.route('/createUserFace',methods = ['POST','GET'])
+def createUserFace():
+    # data = json.loads(request.data)
+    uid = request.form['uid']
+    img = request.files.get('file')
+    
+    savepath = './images'
+    username = str(uid) +'.jpg'
+    print(username)
+    userFacePath = os.path.join(savepath,username) 
+    userFacePath = userFacePath.replace('\\', '/')
+    print(userFacePath)
+    img.save(userFacePath)
+    createTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    updateTime = createTime
+    faceEmbedding = ""  # 调用ai模型生成结果
+    data = HR_addUserFace(uid,userFacePath,faceEmbedding,createTime,updateTime)
+    return jsonify({
+        "code":0,
+        "msg":"添加成功！！！"
+    })
 
 @HR.route('/querySysConfig',methods = ["POST","GET"])
 def querySysConfig():
@@ -10,9 +33,9 @@ def querySysConfig():
     data = HR_querySysConfig(data["departmentName"])
     if data is None:
         return jsonify({
-        "code":-1,
-        "msg":"该部门不存在！"
-    })
+            "code":-1,
+            "msg":"该部门不存在！"
+        })
     # print(type(data))
     data['clockInTime'] = data['clockInTime'].strftime('%H:%M:%S')
     data['clockOutTime'] = data['clockOutTime'].strftime('%H:%M:%S')
