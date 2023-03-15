@@ -5,11 +5,17 @@ import datetime
 class HR_Department(db.Model):
     __tablename__ = 'departments'
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    HRname = db.Column(db.String(45), nullable=False)
+    HRuid = db.Column(db.Integer, nullable=False)
     createTime = db.Column(db.DateTime, nullable=False,default = datetime.datetime.utcnow)
     description = db.Column(db.String(45), nullable=False)
     state = db.Column(db.String(45), nullable=False)
     departmentName = db.Column(db.String(45), nullable=False)
+    hourPay = db.Column(db.String(45), nullable=False)
+    workOverPay = db.Column(db.String(45), nullable=False)
+    workOverLimit = db.Column(db.String(45), nullable=False)
+    startTime = db.Column(db.Time, nullable=False,default = datetime.time)
+    endTime = db.Column(db.Time, nullable=False,default = datetime.time)
+    workdays = db.Column(db.String(45), nullable=False)
 
 class HR_SysConfig(db.Model):
     __tablename__ = 'sysconfigs'
@@ -20,10 +26,10 @@ class HR_SysConfig(db.Model):
 
 class HR_UserFace(db.Model):
     __tablename__ = 'userfaces'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    id = db.Column(db.Integer, primary_key=True)
     userName = db.Column(db.String(45), nullable=False)
     userFacePath = db.Column(db.String(45), nullable=False)
     faceEmbedding = db.Column(db.String(145), nullable=False)
-    createTime = db.Column(db.Time, nullable=False,default = datetime.datetime.utcnow)
-    updateTime = db.Column(db.Time, nullable=False,default = datetime.datetime.utcnow)
+    createTime = db.Column(db.DateTime, nullable=False,default = datetime.datetime.utcnow)
+    updateTime = db.Column(db.DateTime, nullable=False,default = datetime.datetime.utcnow)
  

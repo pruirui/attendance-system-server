@@ -2,6 +2,21 @@ from operation.user import User_operation
 from utils.data_process import Class_To_Data,query2dict
 # from db_config import session
 
+def user_quitDepartment(datas):
+    u_o = User_operation()
+    data = u_o._userQuitDepartment(datas)
+    return data
+
+def user_applyDepartment(datas):
+    u_o = User_operation()
+    data = u_o._userApplyDepartment(datas)
+    return data
+
+def user_uploadHeadImg(uid,facepath):
+    u_o = User_operation()
+    data = u_o._userUploadImg(uid,facepath)
+    return data
+
 def User_queryClockBy(uid,date,note):
     u_o = User_operation()
     data = u_o._userClockByCondition(uid,date,note)
@@ -42,6 +57,8 @@ def Alluser_ClockData():
 def User_ClockData(uid):
     u_o = User_operation()
     data = u_o._userClockData(uid)
+    if data is None:
+        return None
     data = query2dict(data)
     return data
 
@@ -67,9 +84,9 @@ def User_reg(kwargs):
    
     return "ok"
 
-def User_update(username,datas):
+def User_update(uid,datas):
     u_o = User_operation()
-    data = u_o._userUpdate(username,datas)
+    data = u_o._userUpdate(uid,datas)
    
     return "ok"
 
@@ -85,13 +102,14 @@ def User_login(phone,pwd):
     u_o = User_operation()
     data = u_o._login(phone,pwd)
     if data is None:
-        return "该用户不存在"
+        return "该用户不存在",0
     # print(data)
     # data = Class_To_Data(data,u_o.__fields__, 1)
     data = query2dict(data)
     # print(name,pwd)
     print(data)
     if data['password'] != pwd:
-        return "密码不正确"
+        return "密码不正确",0
     #  else
-    return data
+    
+    return data,1

@@ -1,14 +1,15 @@
 from models.HR import HR_Department,HR_SysConfig,HR_UserFace
+from models.shared import User_departments
 from db_config import db_init as db
 from db_config import session
-
+from sqlalchemy import distinct
 class HR_operation():
     def __init__(self):
         self.__fields__ = ['id','username','password'] 
 
-    def _createDepartment(self,departmentName,time,description,HRname,state):
-        new_data = HR_Department(HRname=HRname,createTime=time,description=description,\
-                                 departmentName=departmentName,state=state)
+    def _createDepartment(self,uid,datas):
+        new_data = HR_Department(HRuid=uid,createTime=datas['createTime'],description=datas['description'],\
+                                 departmentName=datas['departmentName'],state=datas['state'])
         session.add(new_data)
         session.commit()
 
@@ -35,3 +36,23 @@ class HR_operation():
                                createTime=createTime,updateTime=updateTime)
         session.add(new_data)
         session.commit()
+
+    def _searchUserfaceById(self,uid):
+        data = HR_UserFace.query.filter_by(id=uid).first()
+        print(data)
+        print(type(data))
+        return data
+    
+    def _updateUserfaceById(self,uid,faceEmbedding,updateTime):
+        data = HR_UserFace.query.filter(HR_UserFace.id == uid).first()
+        data.faceEmbedding = faceEmbedding
+        data.updateTime = updateTime
+        db.session.commit()
+        # print(data)
+        # print(type(data))
+        return data
+    
+    def _FindUsersInDepartment(self,departid):
+        data = User_departments.query.filter(User_departments.departmentid==departid).all()
+        print(type(data),type(data[0]))
+        return data

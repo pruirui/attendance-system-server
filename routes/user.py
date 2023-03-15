@@ -3,23 +3,48 @@ from flask import Blueprint,request,jsonify
 user = Blueprint('user',__name__)
 
 from api.user import *
-import datetime
+import datetime,os
 
 @user.route('/userUpdate',methods = ['POST'])
 def userUpdate():
-    username = 'lee'
+    uid = 1
     data = json.loads(request.data)
     print(data)
     # password = data['password']
     # phone = data['phone']
     # if data['aa'] is None:
         # print("none")
-    User_update(username,data)
+    User_update(uid,data)
     return jsonify({
                 "code":1,
-                "msg":"修改成功!!!"
+                "msg":"用户信息更新成功!!!"
             })
 
+@user.route('/userQuitDepartment',methods = ['GET','POST'])
+def userQuitDepartment():
+    data = json.loads(request.data)
+    uid = 2
+    data['uid'] = uid
+    user_quitDepartment(data)
+    return jsonify({
+            "code":1,
+            "msg":"人生有梦，各自精彩！"
+        })
+
+@user.route('/userApplyDepartment',methods = ['GET','POST'])
+def userApplyDepartment():
+    data = json.loads(request.data)
+    datetmp = datetime.date.today().strftime('%y-%m-%d')
+    print(datetmp)
+    uid = 3
+    data['uid'] = uid
+    data['indate'] = datetmp
+    user_applyDepartment(data)
+    return jsonify({
+            "code":1,
+            "msg":"申请成功，请等待HR审核！"
+        })
+    
 @user.route('/makeUpClock',methods = ['GET','POST'])
 def userMakeUpClock():
     uid = 1
@@ -65,10 +90,18 @@ def allUserClockData():
 
 @user.route('/userClockData',methods = ['GET','POST'])
 def userClockData():
-    uid = 1
+    uid = 3
     data = User_ClockData(uid)
-    print(data[0])
-    return jsonify(data)
+    print((data))
+    if data is None:
+        return jsonify({
+            "code":1,
+            "data":"无打卡数据"
+        })
+    return jsonify({
+        "code":1,
+        "data":data
+    })
 
 @user.route('/clockOut',methods = ['GET','POST'])
 def clockOut():
@@ -98,6 +131,10 @@ def clockOut():
 def clockIn():
     # username = "lee"
     uid = 1
+    # userimg = request.files.get('file')
+
+    #匹配人脸
+
     dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     data = User_queryClockBy(uid,dateTmp[:11],"签到")
     if data is not None:
@@ -107,7 +144,7 @@ def clockIn():
         })
     print(dateTmp[11:])
     datefront = datetime.time(8,0,0).strftime('%H:%M:%S')
-    dateend = datetime.time(10,0,0).strftime('%H:%M:%S')
+    dateend = datetime.time(20,0,0).strftime('%H:%M:%S')
     if(dateTmp[11:] > datefront):
         print("ok")
     print(type('!!!'))
@@ -152,22 +189,48 @@ def user_info():
         "msg": "token不存在或已过期"
     })
 
+@user.route('/uploadHeadImg',methods=['GET','POST'])
+def uploadHeadImg():
+    uid = '1'
+    img = request.files.get('file')
+    savepath = './images/headshots'
+    if img.filename[-4:] not in ['.jpg','.png','jpeg']:
+        return jsonify({
+            "code":-1,
+            "msg":"请提交jpg、png、jpeg格式的图片!"
+        })
+    filename = str(uid) + img.filename[-4:]
+    userFacePath = os.path.join(savepath,filename) 
+    print(img)
+    userFacePath = userFacePath.replace('\\', '/')
+    print(userFacePath)
+    img.save(userFacePath)
+    # data = user_uploadHeadImg(uid,userFacePath)
+    return jsonify({
+        "code":1,
+        "msg":"用户头像添加成功！！！"
+    })
 
 @user.route('/login',methods=['GET','POST'])
 def login():
     data = json.loads(request.data)
     phone = data['phone']
     pwd = data['password']
-    data = User_login(phone,pwd)
-
-    if data:
+    data,flag = User_login(phone,pwd)
+    data['birthday'] = data['birthday'].strftime('%Y-%m-%d')
+    print(type(data['birthday']))
+    data.pop('headshot')   
+    # data = jsonify(data)
+    if flag:
         return jsonify({
-            "code":0,
-            "msg":data
+            "code":1,
+            "msg":"登陆成功",
+            "data":(data)
         })
     else:
         return jsonify({
-            "code":1,
+            "code":-1,
+            "msg":data,
             "data":{
                 "token":666666
             }
@@ -190,10 +253,11 @@ def reg():
     else :      # 直接注册
         data = User_reg({
             "phone":data["phone"],
-            "password":data["password"]
+            "password":data["password"],
+            "username":data['username']
         })
         print(data)
         return ({
-                "code": 0, 
-                "msg": "恭喜，注册成功！"
+                "code": 1, 
+                "msg": "恭喜你，注册成功！"
             })

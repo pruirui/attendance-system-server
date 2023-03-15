@@ -5,12 +5,31 @@ import datetime
 import os
 HR = Blueprint('HR',__name__)
 
+@HR.route('/usersInDepartment',methods = ['POST','GET'])
+def usersInDepartment():
+    data = json.loads(request.data)
+    departmentid = data['departmentid']
+    data = HR_FindAllUsersInDepartment(departmentid)
+    return jsonify({
+        "code":1,
+        "data":data
+    })
+
 @HR.route('/createUserFace',methods = ['POST','GET'])
 def createUserFace():
     # data = json.loads(request.data)
     uid = request.form['uid']
     img = request.files.get('file')
-    
+    data = HR_SearchUserFaceById(uid)
+    faceEmbedding = ""  # 调用ai模型生成结果
+    updateTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    print(data)
+    if data is not None:
+        data = HR_UpdateUserFaceById(uid,faceEmbedding,updateTime)
+        return jsonify({
+            "code":1,
+            "msg":"面部数据更新成功！"
+        })
     savepath = './images'
     username = str(uid) +'.jpg'
     print(username)
@@ -20,10 +39,10 @@ def createUserFace():
     img.save(userFacePath)
     createTime = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     updateTime = createTime
-    faceEmbedding = ""  # 调用ai模型生成结果
+    
     data = HR_addUserFace(uid,userFacePath,faceEmbedding,createTime,updateTime)
     return jsonify({
-        "code":0,
+        "code":1,
         "msg":"添加成功！！！"
     })
 
@@ -69,10 +88,12 @@ def addSysConfig():
 @HR.route('/createDepartment',methods = ["POST","GET"])
 def createDepartment():
     data = json.loads(request.data)
-    HRname = 'lee'
+    uid = 1
     dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    data['createTime'] = dateTmp
+    data['state'] = '未审批'
     # print(data['departmentName'],dateTmp,data['description'],HRname)
-    HR_createDpartment(data["departmentName"],dateTmp,data["description"],HRname,'待审核')
+    HR_createDpartment(uid,data)
     return jsonify({
         "code":1,
         "msg":"恭喜你，创建成功，请等候审核！！！"

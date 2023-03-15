@@ -13,6 +13,9 @@ class Users(db.Model):
     motto = db.Column(db.String(45), nullable=False)
     gender = db.Column(db.String(45), nullable=False)
     home = db.Column(db.String(45), nullable=False)
+    flag = db.Column(db.Integer, nullable=False)
+    headshot = db.Column(db.String(45), nullable=False)
+    email = db.Column(db.String(45), nullable=False)
 
     def __repr__(self):
         return '<User %s>' % self.username
@@ -31,3 +34,4 @@ class User_applications(db.Model):
     applyTime = db.Column(db.DateTime, nullable=False,default = datetime.datetime.utcnow)
     state = db.Column(db.String(45), nullable=False)
     content = db.Column(db.String(45), nullable=False)
+

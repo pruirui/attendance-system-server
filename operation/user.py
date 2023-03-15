@@ -1,4 +1,5 @@
 from models.user import Users,User_clocks,User_applications
+from models.shared import User_departments
 from db_config import session
 from db_config import db_init as db
 from sqlalchemy import extract, and_
@@ -16,7 +17,7 @@ class User_operation():
         return user_list
     
     def _reg(self,kwargs):
-        new_user = Users(phone=kwargs["phone"],password=kwargs["password"])
+        new_user = Users(phone=kwargs["phone"],password=kwargs["password"],username=kwargs['username'])
         session.add(new_user)
         session.commit()
         # session.close()
@@ -25,8 +26,13 @@ class User_operation():
         user = Users.query.filter_by(phone=phone).first()
         return user
     
-    def _userUpdate(self,username,datas):
-        user = Users.query.filter(Users.username == username).first()
+    def _userUploadImg(self,uid,facepath):
+        user = Users.query.filter(Users.id == uid).first()
+        user.headshot = facepath
+        db.session.commit()
+
+    def _userUpdate(self,uid,datas):
+        user = Users.query.filter(Users.id == uid).first()
         if user:
             user.username = datas['username']
             user.password = datas['password']
@@ -36,6 +42,7 @@ class User_operation():
             user.motto = datas['motto']
             user.gender = datas['gender']
             user.home = datas['home']
+            user.email = datas['email']
             db.session.commit()
         else:
             print("not found!")
@@ -49,6 +56,7 @@ class User_operation():
     
     def _userClockData(self,uid):
         data_list = User_clocks.query.filter_by(uid=uid).all()
+        print(type(data_list))
         return data_list
     
     def _userClockByCondition(self,uid,date,note):
@@ -79,4 +87,15 @@ class User_operation():
         new_data = User_applications(uid=uid,applyTime=time,content=content,state=state)
         session.add(new_data)
         session.commit()
+        # session.close()
+
+    def _userApplyDepartment(self,datas): 
+        new_data = User_departments(uid=datas['uid'],indate=datas['indate'],departmentid=datas['departmentid'],role="员工",state="待审核")
+        session.add(new_data)
+        session.commit()
+        # session.close()
+
+    def _userQuitDepartment(self,datas): 
+        User_departments.query.filter_by(uid=datas['uid'],departmentid=datas['departmentid']).delete()
+        db.session.commit()
         # session.close()
