@@ -1,9 +1,10 @@
 from models.user import Users,User_clocks,User_applications
 from models.shared import User_departments
+from models.HR import HR_UserFace
 from db_config import session
 from db_config import db_init as db
 from sqlalchemy import extract, and_
-# lei
+# 
 class User_operation():
     def __init__(self):
         self.__fields__ = ['id','username','password'] 
@@ -99,3 +100,11 @@ class User_operation():
         User_departments.query.filter_by(uid=datas['uid'],departmentid=datas['departmentid']).delete()
         db.session.commit()
         # session.close()
+
+    def _userQueryEmbedding(self,uid):
+        data = HR_UserFace.query.filter_by(id=uid).first()
+        return data
+    
+    def _userQueryDepartment(self,uid):
+        data = User_departments.query.filter_by(uid=uid).first()
+        return data

@@ -4,7 +4,7 @@ import datetime
     
 class HR_Department(db.Model):
     __tablename__ = 'departments'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    departmentid = db.Column(db.Integer, primary_key=True)
     HRuid = db.Column(db.Integer, nullable=False)
     createTime = db.Column(db.DateTime, nullable=False,default = datetime.datetime.utcnow)
     description = db.Column(db.String(45), nullable=False)
@@ -29,7 +29,7 @@ class HR_UserFace(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     userName = db.Column(db.String(45), nullable=False)
     userFacePath = db.Column(db.String(45), nullable=False)
-    faceEmbedding = db.Column(db.String(145), nullable=False)
+    faceEmbedding = db.Column(db.LargeBinary, nullable=False)
     createTime = db.Column(db.DateTime, nullable=False,default = datetime.datetime.utcnow)
     updateTime = db.Column(db.DateTime, nullable=False,default = datetime.datetime.utcnow)
  

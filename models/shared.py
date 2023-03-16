@@ -9,6 +9,3 @@ class User_departments(db.Model):
     indate = db.Column(db.Date, nullable=False,default = datetime.date)
     state = db.Column(db.String(45), nullable=False)
     role = db.Column(db.String(45), nullable=False)
-
-    def _as_dict(self):
-        return {c.uid: getattr(self, c.uid) for c in self.__table__.columns}

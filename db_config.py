@@ -1,8 +1,8 @@
-
 from flask_sqlalchemy  import SQLAlchemy
 from flask import Flask
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from flask_cors import CORS
 
 HOST = "127.0.0.1"
 PORT = "3306"
@@ -12,6 +12,7 @@ DB = 'clock'
 DB_URL = f'mysql+pymysql://{USERNAME}:{PASSWORD}@{HOST}:{PORT}/{DB}'
 # 数据库配置     
 app = Flask(__name__)
+CORS(app)
 app.config["JSON_AS_ASCII"] = False
 app.config["UPLOAD_FOLDER"] = '/images'
 app.config['SECRET_KEY'] = 'hard to guess'

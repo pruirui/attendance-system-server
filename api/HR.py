@@ -1,10 +1,15 @@
 from operation.HR import HR_operation
 from utils.data_process import query2dict
 
+def HR_updateDepartConfig(departid,datas):
+    H_o = HR_operation()
+    data = H_o._updateDepartConfig(departid,datas)
+    return data
+
 def HR_FindAllUsersInDepartment(departid):
     H_o = HR_operation()
     data = H_o._FindUsersInDepartment(departid)
-    print(data)
+    print(type(data))
     if data is None:
         return None
     return query2dict(data)
@@ -27,9 +32,14 @@ def HR_addUserFace(uid,userFacePath,faceEmbedding,createTime,updateTime):
     data = H_o._addUserFace(uid,userFacePath,faceEmbedding,createTime,updateTime)
     return data
 
-def HR_createDpartment(uid,datas):
+def HR_createDpartment(uid,datas): #创建部门
     HR_o = HR_operation()
     data = HR_o._createDepartment(uid,datas)
+    return data
+
+def HR_deleteDpartment(departid): #删除部门
+    HR_o = HR_operation()
+    data = HR_o._DeleteDepartment(departid)
     return data
 
 def HR_addSysConfig(departmentName,clockIn,clockOut):

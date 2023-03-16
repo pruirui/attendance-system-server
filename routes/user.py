@@ -4,7 +4,8 @@ user = Blueprint('user',__name__)
 
 from api.user import *
 import datetime,os
-
+import base64
+from face.face_recognition import getFaceEmbedding,getdistance
 @user.route('/userUpdate',methods = ['POST'])
 def userUpdate():
     uid = 1
@@ -36,7 +37,7 @@ def userApplyDepartment():
     data = json.loads(request.data)
     datetmp = datetime.date.today().strftime('%y-%m-%d')
     print(datetmp)
-    uid = 3
+    uid = 1
     data['uid'] = uid
     data['indate'] = datetmp
     user_applyDepartment(data)
@@ -75,11 +76,17 @@ def userLeave():
             "msg":"申请成功，请等待审核！"
         })
 
-@user.route('/userBaseData',methods = ['GET','POST'])
+@user.route('/userBaseData',methods = ['GET','POST'])  #用户基本数据
 def userBaseData():
     phone = '17365691811'
     data = User_BaseData(phone)
+    data['birthday'] = data['birthday'].strftime("%Y-%m-%d")
+    imgpath = data['headshot']
+    with open(imgpath, 'rb') as f:
+        image_data = f.read()
+        encoded_image = base64.b64encode(image_data).decode('utf-8')
     print(data)
+    data['headshot'] = encoded_image
     return jsonify(data)
 
 @user.route('/allUserClockData',methods = ['GET','POST'])
@@ -126,14 +133,33 @@ def clockOut():
                 "code":-1,
                 "msg":"打卡失败,未到签退时间!"
             })
-
+import numpy as np
 @user.route('/clockIn',methods = ['GET','POST'])
 def clockIn():
     # username = "lee"
-    uid = 1
-    # userimg = request.files.get('file')
-
+    uid = 9
+    userclockimg = request.files.get('file')
+    filename = userclockimg.filename
+    print((filename.split('.')))
+    path = './images/temp/' + str(uid) + '.' +  filename.split('.')[-1]
+    userclockimg.save(path)
+    # userclockimg = np.array(userclockimg)
+    # print(len(userclockimg))
+    # img = request.files.get('file')
+    # userimgpath = './images/userfaces' + str(uid)
+    data = user_QueryEmbedding(uid)
+    userclockimg = np.array(getFaceEmbedding(path))
+    userfacembedding = np.frombuffer(data['faceEmbedding']).reshape(512)
+    # cos_sim = np.dot(userclockimg,userfacembedding) / (np.linalg.norm(userclockimg) * np.linalg.norm(userfacembedding))
+    distance = getdistance(userclockimg,userfacembedding)
+    print("userface",type(userfacembedding[0]))
+    print(distance)
     #匹配人脸
+    if not distance:
+        return jsonify({
+            "code":-1,
+            "msg":"人脸检测失败，请重新打卡！"
+        })
 
     dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     data = User_queryClockBy(uid,dateTmp[:11],"签到")
@@ -144,7 +170,7 @@ def clockIn():
         })
     print(dateTmp[11:])
     datefront = datetime.time(8,0,0).strftime('%H:%M:%S')
-    dateend = datetime.time(20,0,0).strftime('%H:%M:%S')
+    dateend = datetime.time(10,0,0).strftime('%H:%M:%S')
     if(dateTmp[11:] > datefront):
         print("ok")
     print(type('!!!'))
@@ -213,15 +239,32 @@ def uploadHeadImg():
 
 @user.route('/login',methods=['GET','POST'])
 def login():
+    # token = request.headers['token']
+    # print(token)
     data = json.loads(request.data)
     phone = data['phone']
     pwd = data['password']
     data,flag = User_login(phone,pwd)
-    data['birthday'] = data['birthday'].strftime('%Y-%m-%d')
-    print(type(data['birthday']))
-    data.pop('headshot')   
     # data = jsonify(data)
     if flag:
+        uid = data['id']
+        depart_data = user_QueryDepartment(uid)
+        if depart_data is None:
+            data['role'] = "新注册用户"
+        else:
+            data['role'] = depart_data['role']
+        data['birthday'] = data['birthday'].strftime('%Y-%m-%d')
+        imgpath = data['headshot']
+        if imgpath == None:
+            data['headshot'] = "未上传图片"
+        else:
+            with open(imgpath, 'rb') as f:
+                image_data = f.read()
+                encoded_image = base64.b64encode(image_data).decode('utf-8')
+            print(data)
+            data['headshot'] = encoded_image
+        # print(type(data['birthday']))
+        # data.pop('headshot') 
         return jsonify({
             "code":1,
             "msg":"登陆成功",

@@ -2,6 +2,20 @@ from operation.user import User_operation
 from utils.data_process import Class_To_Data,query2dict
 # from db_config import session
 
+def user_QueryDepartment(uid):
+    u_o = User_operation()
+    data = u_o._userQueryDepartment(uid)
+    if data is None:
+        return None
+    return query2dict(data)
+
+def user_QueryEmbedding(uid):
+    u_o = User_operation()
+    data = u_o._userQueryEmbedding(uid)
+    if data is None:
+        return None
+    return query2dict(data)
+
 def user_quitDepartment(datas):
     u_o = User_operation()
     data = u_o._userQuitDepartment(datas)
