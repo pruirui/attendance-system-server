@@ -3,6 +3,7 @@ from flask import Blueprint,request,jsonify
 user = Blueprint('user',__name__)
 
 from api.user import *
+from api.shared import *
 import datetime,os
 import base64
 from face.face_recognition import getFaceEmbedding,getdistance
@@ -14,11 +15,14 @@ def userInDepartment():
     # data['uid'] = uid
     data = user_QueryDepartment(uid)
     print(data)
-    # print(type((data[0])))
-    print(data)
+    if data is None:
+        return jsonify({
+            "code":-1,
+            "msg":"该用户未加入公司！"
+        })
     return jsonify({
             "code":1,
-            "msg":data
+            "data":data
         })
 
 
@@ -40,22 +44,46 @@ def userUpdate():
 @user.route('/userQuitDepartment',methods = ['GET','POST'])
 def userQuitDepartment():
     data = json.loads(request.data)
-    uid = 1
+    datetimeTmp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
+    uid = 2
     data['uid'] = uid
-    user_quitDepartment(data)
+    data['createtime'] = datetimeTmp
+    data['event'] = '员工申请退出公司'
+    data['description'] = '赞无描述'
+    res = All_queryLog(data)
+    if res is not None:
+        return jsonify({
+            "code":-1,
+            "msg":"已提交申请，请勿重复提交！"
+        })
+    User_addInDepartmentLog(data)
+    # user_quitDepartment(data)"msg":"人生有梦，各自精彩！"
     return jsonify({
             "code":1,
-            "msg":"人生有梦，各自精彩！"
+            "msg":"离职申请已提交，请等待审核！"
         })
 
 @user.route('/userApplyDepartment',methods = ['GET','POST'])
 def userApplyDepartment():
     data = json.loads(request.data)
     datetmp = datetime.date.today().strftime('%y-%m-%d')
+    datetimeTmp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
     print(datetmp)
-    uid = 1
+    uid = 2
     data['uid'] = uid
     data['indate'] = datetmp
+    datas = data
+    datas['createtime'] = datetimeTmp
+    # datas['applytime'] = None
+    datas['event'] = '员工申请加入公司'
+    datas['description'] = '赞无描述'
+    res = All_queryLog(data)
+    if res is not None:
+        return jsonify({
+            "code":-1,
+            "msg":"已提交申请，请勿重复提交！"
+        })
+    User_addInDepartmentLog(datas)
     user_applyDepartment(data)
     return jsonify({
             "code":1,
@@ -65,28 +93,59 @@ def userApplyDepartment():
 @user.route('/makeUpClock',methods = ['GET','POST'])
 def userMakeUpClock():
     uid = 1
-    dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    User_MakeUpClock(uid,dateTmp,"补打卡","未处理")
+    # dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    data = json.loads(request.data)
+    datetimeTmp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
+    datetmp = datetime.datetime.strptime(data['date'],'%Y-%m-%d').strftime('%Y-%m-%d')
+    print((datetmp))
+    data['uid'] = uid
+    data['event'] = '员工申请补打卡'
+    data['makeup_clock'] = datetmp
+    data['createtime'] = datetimeTmp
+    res = User_MakeUpClock(data)
+    if res is not None:
+        return jsonify({
+            "code":-1,
+            "msg":"申请已提交，请勿重复提交！"
+        })
     return jsonify({
             "code":1,
-            "msg":"申请成功，请等待审核！"
+            "msg":"补卡申请成功，请等待审核！"
         })
 
-@user.route('/workOverTime',methods = ['GET','POST'])
+@user.route('/workOverTime',methods = ['GET','POST']) #申请加班
 def userWorkOverTime():
     uid = 1
-    dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    User_WorkOverTime(uid,dateTmp,"加班","未处理")
+    data = json.loads(request.data)
+    datetimeTmp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
+    data['uid'] = uid
+    data['event'] = '员工申请补加班'
+    data['createtime'] = datetimeTmp
+
+    res = User_WorkOverTime(data)
+    if res is not None:
+        return jsonify({
+            "code":-1,
+            "msg":"申请已提交，请勿重复提交！"
+        })
     return jsonify({
             "code":1,
-            "msg":"申请成功，请等待审核！"
+            "msg":"请假申请成功，请等待审核！"
         })
 
-@user.route('/leave',methods = ['GET','POST'])
+@user.route('/userLeave',methods = ['GET','POST'])
 def userLeave():
     uid = 1
+    datas = json.loads(request.data)
     dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    User_Leave(uid,dateTmp,"请假","未处理")
+    datas['create_time'] = dateTmp
+    datas['uid'] = uid
+    res = User_Leave(datas)
+    if res is not None:
+        return jsonify({
+            "code":1,
+            "msg":"申请已提交，请勿重复提交！"
+        })
     return jsonify({
             "code":1,
             "msg":"申请成功，请等待审核！"
@@ -255,8 +314,11 @@ def uploadHeadImg():
 
 @user.route('/login',methods=['GET','POST'])
 def login():
-    # token = request.headers['token']
-    # print(token)
+    token = request.headers['Authorization']
+    print(token)
+    # return jsonify({
+    #     "data":token
+    # })
     data = json.loads(request.data)
     phone = data['phone']
     pwd = data['password']

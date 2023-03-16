@@ -1,10 +1,17 @@
 from operation.HR import HR_operation
 from utils.data_process import query2dict
 
+def HR_queryDepartClockData(departid):
+    H_o = HR_operation()
+    data = H_o._QueryDepartmentClockData(departid)
+    return query2dict(data)
+
 def HR_updateDepartConfig(departid,datas):
     H_o = HR_operation()
     data = H_o._updateDepartConfig(departid,datas)
-    return data
+    if data is None:
+        return None
+    return query2dict(data)
 
 def HR_FindAllUsersInDepartment(departid):
     H_o = HR_operation()

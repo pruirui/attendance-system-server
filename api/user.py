@@ -49,19 +49,19 @@ def User_queryClockBy(uid,date,note):
     data = query2dict(data)
     return data
 
-def User_MakeUpClock(uid,time,content,state):
+def User_MakeUpClock(datas):
     u_o = User_operation()
-    data = u_o._userMakeUpClock(uid,time,content,state)
+    data = u_o._userMakeUpClock(datas)
     return data
 
-def User_WorkOverTime(uid,time,content,state):
+def User_WorkOverTime(datas):
     u_o = User_operation()
-    data = u_o._userWorkOverTime(uid,time,content,state)
+    data = u_o._userWorkOverTime(datas)
     return data
 
-def User_Leave(uid,time,content,state):
+def User_Leave(datas):
     u_o = User_operation()
-    data = u_o._userLeave(uid,time,content,state)
+    data = u_o._userLeave(datas)
     return data 
 
 def User_BaseData(phone):

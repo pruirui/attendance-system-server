@@ -1,6 +1,6 @@
 from models.HR import HR_Department,HR_SysConfig,HR_UserFace
 from models.shared import User_departments
-from models.user import  Users
+from models.user import  Users,User_clocks
 from db_config import db_init as db
 from db_config import session
 from sqlalchemy import distinct
@@ -85,5 +85,12 @@ class HR_operation():
         # print(dir(data1[0]),data1[0]._fields,data1[0]._data)
         # print((data1).__name__,type(data1[0]))
         # print(type(data),type(data[0]))
+        print(data)
+        return data
+    
+    def _QueryDepartmentClockData(self,departid): # 部门员工打卡数据
+        data = db.session.query(User_departments.state,User_clocks.clockTime,User_clocks.note).\
+            filter(User_departments.departmentid==departid).\
+            filter(User_departments.uid==User_clocks.uid).all()
         print(data)
         return data

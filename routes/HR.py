@@ -7,6 +7,17 @@ from face.face_recognition import getFaceEmbedding
 import numpy as np
 HR = Blueprint('HR',__name__)
 
+@HR.route('/departmentClockData',methods = ['POST','GET'])
+def departmentClockData():
+    data = json.loads(request.data)
+    departmentid = data['departmentid']
+    datas = HR_queryDepartClockData(departmentid)
+    print(datas)
+    return jsonify({
+        "code":1,
+        "data":datas
+    })
+
 @HR.route('/usersInDepartment',methods = ['POST','GET']) 
 def usersInDepartment():
     data = json.loads(request.data)
@@ -18,13 +29,14 @@ def usersInDepartment():
             # "length":length,
             "msg":"该部门暂无员工"
         })
-    for data in datas:
+    for data in datas:   # 拿用户头像
         imgpath = data['headshot']
-        with open(imgpath, 'rb') as f:
-            image_data = f.read()
-            encoded_image = base64.b64encode(image_data).decode('utf-8')
-        print(data)
-        data['headshot'] = encoded_image
+        if imgpath is not None:
+            with open(imgpath, 'rb') as f:
+                image_data = f.read()
+                encoded_image = base64.b64encode(image_data).decode('utf-8')
+            print(data)
+            data['headshot'] = encoded_image
     # length = len(data)
     return jsonify({
         "code":1,

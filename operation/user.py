@@ -1,5 +1,5 @@
 from models.user import Users,User_clocks
-from models.shared import User_departments
+from models.shared import User_departments,Applications,Leaves
 from models.HR import HR_UserFace,HR_Department
 from db_config import session
 from db_config import db_init as db
@@ -72,20 +72,41 @@ class User_operation():
         data_list = User_clocks.query.all()
         return data_list
     
-    def _userLeave(self,uid,time,content,state):  #请假
-        new_data = User_applications(uid=uid,applyTime=time,content=content,state=state)
+    def _userLeave(self,datas):  #请假
+        data = Leaves.query.filter_by(uid=datas['uid'],state = '未审批').first()
+        if data is not None:
+            return data
+        new_data = Leaves(uid=datas['uid'],create_time=datas['create_time'],start_time=datas['start_time'],\
+                          end_time=datas['end_time'],state = '未审批')
         session.add(new_data)
         session.commit()
         # session.close()
 
-    def _userWorkOverTime(self,uid,time,content,state):  #加班
-        new_data = User_applications(uid=uid,applyTime=time,content=content,state=state)
+    def _userWorkOverTime(self,datas):  #加班
+        if 'description' not in datas.keys():
+            datas['description'] = '赞无描述'
+        data = Applications.query.filter_by(sender_id=datas['uid'],\
+                            event=datas['event'],description=datas['description'],state="待审批",content=datas['content']).first()
+        if data is not None:
+            return data
+        
+        new_data = Applications(sender_id=datas['uid'],create_time=datas['createtime'],\
+                            event=datas['event'],description=datas['description'],state="待审批",content=datas['content'])
         session.add(new_data)
         session.commit()
         # session.close()
     
-    def _userMakeUpClock(self,uid,time,content,state):  #补打卡
-        new_data = User_applications(uid=uid,applyTime=time,content=content,state=state)
+    def _userMakeUpClock(self,datas):  #补打卡
+        # department_id=datas['departmentid']
+        if 'description' not in datas.keys():
+            datas['description'] = '赞无描述'
+        data = Applications.query.filter_by(sender_id=datas['uid'],makeup_clock=datas['makeup_clock'],\
+                            event=datas['event'],description=datas['description'],state="待审批",content=datas['content']).first()
+        if data is not None:
+            return data
+        
+        new_data = Applications(sender_id=datas['uid'],create_time=datas['createtime'],makeup_clock=datas['makeup_clock'],\
+                            event=datas['event'],description=datas['description'],state="待审批",content=datas['content'])
         session.add(new_data)
         session.commit()
         # session.close()
@@ -97,7 +118,8 @@ class User_operation():
         # session.close()
 
     def _userQuitDepartment(self,datas): 
-        User_departments.query.filter_by(uid=datas['uid'],departmentid=datas['departmentid']).delete()
+        data = User_departments.query.filter_by(uid=datas['uid'],departmentid=datas['departmentid']).first()
+        data.state = '离职'
         db.session.commit()
         # session.close()
 
