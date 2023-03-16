@@ -27,11 +27,5 @@ class User_clocks(db.Model):
     clockTime = db.Column(db.DateTime, nullable=False,default = datetime.datetime.utcnow)
     note = db.Column(db.String(45), nullable=False)
 
-class User_applications(db.Model):
-    __tablename__ = 'user_applications'
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    uid = db.Column(db.Integer, nullable=False)
-    applyTime = db.Column(db.DateTime, nullable=False,default = datetime.datetime.utcnow)
-    state = db.Column(db.String(45), nullable=False)
-    content = db.Column(db.String(45), nullable=False)
+
 

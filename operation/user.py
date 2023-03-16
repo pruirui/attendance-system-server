@@ -1,6 +1,6 @@
-from models.user import Users,User_clocks,User_applications
+from models.user import Users,User_clocks
 from models.shared import User_departments
-from models.HR import HR_UserFace
+from models.HR import HR_UserFace,HR_Department
 from db_config import session
 from db_config import db_init as db
 from sqlalchemy import extract, and_
@@ -91,7 +91,7 @@ class User_operation():
         # session.close()
 
     def _userApplyDepartment(self,datas): 
-        new_data = User_departments(uid=datas['uid'],indate=datas['indate'],departmentid=datas['departmentid'],role="员工",state="待审核")
+        new_data = User_departments(uid=datas['uid'],indate=datas['indate'],departmentid=datas['departmentid'],role="user",state="待审核")
         session.add(new_data)
         session.commit()
         # session.close()
@@ -106,5 +106,16 @@ class User_operation():
         return data
     
     def _userQueryDepartment(self,uid):
-        data = User_departments.query.filter_by(uid=uid).first()
+        # data = User_departments.query.filter_by(uid=uid).first()
+        data = db.session.query(HR_Department.departmentid,HR_Department.createTime,HR_Department.state,HR_Department.description,\
+                                HR_Department.departmentName,HR_Department.hourPay,HR_Department.workOverLimit,HR_Department.workOverPay,\
+                                    HR_Department.startTime,HR_Department.endTime,HR_Department.workdays,User_departments.role)\
+                                        .filter(User_departments.uid==uid).filter\
+            (HR_Department.departmentid==User_departments.departmentid).all()
         return data
+    
+
+    #  data = db.session.query(Users.username,Users.phone,Users.birthday,Users.password,Users.address,Users.motto,Users.gender,\
+    #                              Users.home,Users.headshot,Users.email,User_departments.state).\
+    #         filter(User_departments.departmentid==departid).\
+    #         filter(Users.id==User_departments.uid).all()

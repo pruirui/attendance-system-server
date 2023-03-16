@@ -76,8 +76,8 @@ class HR_operation():
         return data
 
     def _FindUsersInDepartment(self,departid):  # 查找部门所有员工
-        data = User_departments.query.filter(User_departments.departmentid==departid).all()
-        data1 = db.session.query(Users.username,Users.phone,Users.birthday,Users.password,Users.address,Users.motto,Users.gender,\
+        # data = User_departments.query.filter(User_departments.departmentid==departid).all()
+        data = db.session.query(Users.username,Users.phone,Users.birthday,Users.password,Users.address,Users.motto,Users.gender,\
                                  Users.home,Users.headshot,Users.email,User_departments.state).\
             filter(User_departments.departmentid==departid).\
             filter(Users.id==User_departments.uid).all()
@@ -85,5 +85,5 @@ class HR_operation():
         # print(dir(data1[0]),data1[0]._fields,data1[0]._data)
         # print((data1).__name__,type(data1[0]))
         # print(type(data),type(data[0]))
-        print(data1)
-        return data1 
+        print(data)
+        return data

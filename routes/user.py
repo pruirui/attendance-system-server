@@ -6,7 +6,23 @@ from api.user import *
 import datetime,os
 import base64
 from face.face_recognition import getFaceEmbedding,getdistance
-@user.route('/userUpdate',methods = ['POST'])
+
+@user.route('/userInDepartment',methods = ['GET','POST'])
+def userInDepartment():
+    # data = json.loads(request.data)
+    uid = 1
+    # data['uid'] = uid
+    data = user_QueryDepartment(uid)
+    print(data)
+    # print(type((data[0])))
+    print(data)
+    return jsonify({
+            "code":1,
+            "msg":data
+        })
+
+
+@user.route('/userUpdate',methods = ['POST','GET'])
 def userUpdate():
     uid = 1
     data = json.loads(request.data)
@@ -24,7 +40,7 @@ def userUpdate():
 @user.route('/userQuitDepartment',methods = ['GET','POST'])
 def userQuitDepartment():
     data = json.loads(request.data)
-    uid = 2
+    uid = 1
     data['uid'] = uid
     user_quitDepartment(data)
     return jsonify({
@@ -97,7 +113,7 @@ def allUserClockData():
 
 @user.route('/userClockData',methods = ['GET','POST'])
 def userClockData():
-    uid = 3
+    uid = 1
     data = User_ClockData(uid)
     print((data))
     if data is None:
@@ -249,11 +265,12 @@ def login():
     if flag:
         uid = data['id']
         depart_data = user_QueryDepartment(uid)
+        print(depart_data)
         if depart_data is None:
-            data['role'] = "新注册用户"
+            data['role'] = "newer"
         else:
-            data['role'] = depart_data['role']
-        data['birthday'] = data['birthday'].strftime('%Y-%m-%d')
+            data['role'] = depart_data[0]['role']
+        # data['birthday'] = data['birthday'].strftime('%Y-%m-%d')
         imgpath = data['headshot']
         if imgpath == None:
             data['headshot'] = "未上传图片"
@@ -271,6 +288,7 @@ def login():
             "data":(data)
         })
     else:
+        print(data)
         return jsonify({
             "code":-1,
             "msg":data,

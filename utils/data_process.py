@@ -6,6 +6,18 @@
 import datetime
 from db_config import db_init as db
 
+def time2string(timetmp):
+    # "%Y-%m-%d %H:%M:%S "
+    if type(timetmp) == datetime.datetime:
+        return timetmp.strftime("%Y-%m-%d %H:%M:%S")
+    elif type(timetmp) == datetime.date:
+        return timetmp.strftime("%Y-%m-%d")
+        
+    elif type(timetmp) == datetime.time :
+        return timetmp.strftime("%H:%M:%S")
+    else :
+        return timetmp
+
 def result_to_dict(results):
     res = [dict(zip(r.keys(), r)) for r in results]
     #这里r为一个字典，对象传递直接改变字典属性
@@ -21,28 +33,36 @@ def query2dict(model_list):
             return None
 
         if isinstance(model_list[0],db.Model):   # 这种方式是获得的整个对象  相当于 select * from table
+            print("全部字段")
             lst = []
             for model in model_list:
                 dic = {}
                 for col in model.__table__.columns:
                     dic[col.name] = getattr(model,col.name)
+                    dic[col.name] = time2string(dic[col.name])
                 lst.append(dic)
             return lst
         else:                           #这种方式获得了数据库中的个别字段  相当于select id,name from table
             
             lst = []
             for result in model_list:   #当以这种方式返回的时候，result中会有一个keys()的属性
-                # print(type(result))
-                print(type(result))
+                print("某些字段")
+                print(len(result._data),result._data)
                 # lst.append([dict(zip(result._fields, r._data)) for r in result])
-                lst.append(dict(zip(result._fields, result._data)))
+                # tmp = time2string(result._data)
+                tmp = []
+                for it in result._data:
+                    tmp.append(time2string(it))
+                lst.append(dict(zip(result._fields, tmp)))
             return lst
             # res = result_to_dict(model_list)
     else:                   #不是list,说明是用的get() 或者 first()查询的，得到的结果是一个对象
+        print("first")
         if isinstance(model_list,db.Model):   # 这种方式是获得的整个对象  相当于 select * from table limit=1
             dic = {}
             for col in model_list.__table__.columns:
                 dic[col.name] = getattr(model_list,col.name)
+                dic[col.name] = time2string(dic[col.name])
             return dic
         else:    #这种方式获得了数据库中的个别字段  相当于select id,name from table limit = 1
             return dict(zip(model_list.keys(),model_list))

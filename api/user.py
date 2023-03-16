@@ -1,5 +1,5 @@
 from operation.user import User_operation
-from utils.data_process import Class_To_Data,query2dict
+from utils.data_process import Class_To_Data,query2dict,time2string
 # from db_config import session
 
 def user_QueryDepartment(uid):
@@ -7,7 +7,17 @@ def user_QueryDepartment(uid):
     data = u_o._userQueryDepartment(uid)
     if data is None:
         return None
-    return query2dict(data)
+    data = query2dict(data)
+    # print(data)
+    # data[0]['createTime'] = time2string(data[0]['createTime'])
+    # for it in data:
+    #     # print(type(it),it)
+    #     for i in it.values():
+    #         print(type(i))
+    #         i = time2string(i)
+    #         print(type(i))
+    # print("OOooo")
+    return data
 
 def user_QueryEmbedding(uid):
     u_o = User_operation()
