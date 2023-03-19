@@ -8,22 +8,85 @@ import datetime,os
 import base64
 from face.face_recognition import getFaceEmbedding,getdistance
 
+@user.route('/queryDepartmentDetail',methods = ['POST','GET'])
+def queryDepartmentDetail():
+    data = json.loads(request.data)
+    if data['departmentid'] is None:
+        return jsonify({
+            "code":-1,
+            "msg":"部门编号错误！"
+        })
+    res = user_QueryDepartmentDetail(data)
+    if res is None:
+        return jsonify({
+            "code":-1,
+            "msg":"部门不存在！"
+        })
+    return jsonify({
+        "code":1,
+        "data":res
+    })
+@user.route('/queryAllDepartments',methods = ['POST','GET'])
+def queryAllDepartments():
+    datas = json.loads(request.data)
+    print(datas)
+    # print(type(datas['pageIndex']))
+    pageIndex = (datas['pageIndex']) - 1
+    # print(type(datas['pageIndex']))
+    pageSize = datas['pageSize']
+    
+    # departmentName = data['departmentName']
+    # address = data['address']
+    res = user_QueryAllDepartments(datas)
+    totals = len(res)
+    sum = (len(res) + pageSize -1) // pageSize  #总页数
+    last = pageSize*pageIndex + pageSize
+    print(last,pageIndex,sum)
+    if pageIndex == sum:
+        last = len(res)
+    res = res[pageSize*pageIndex:last]
+    print(pageIndex,pageSize,pageSize*pageIndex,last,datas,totals)
+    for it in res:
+        it['createTime'] = it['createTime'][:10]
+    if res is None:
+        return jsonify({
+            "code":-1,
+            "msg":"未检索到部门，请重新输入公司名称！"
+        })
+    return jsonify({
+        "code":1,
+        "data":res,
+        "totals":totals
+    })
+
 @user.route('/userInDepartment',methods = ['GET','POST'])
 def userInDepartment():
-    # data = json.loads(request.data)
-    uid = 1
+    data = json.loads(request.data)
+    uid = data['uid']
     # data['uid'] = uid
     data = user_QueryDepartment(uid)
-    print(data)
+    print(type(data))
     if data is None:
         return jsonify({
             "code":-1,
             "msg":"该用户未加入公司！"
         })
+    else: 
+        data = data[-1]
+        if data['state'] == '未审批':
+            return jsonify({
+                "code":-1,
+                "msg":"用户待审核！"
+            })
+        elif data['state'] == '离职':
+            return jsonify({
+                "code":-1,
+                "msg":"用户已离职！"
+            })
     return jsonify({
-            "code":1,
-            "data":data
-        })
+        "code":1,
+        "data":data
+    })
 
 
 @user.route('/userUpdate',methods = ['POST','GET'])
@@ -68,28 +131,52 @@ def userApplyDepartment():
     data = json.loads(request.data)
     datetmp = datetime.date.today().strftime('%y-%m-%d')
     datetimeTmp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
-    print(datetmp)
-    uid = 2
-    data['uid'] = uid
+    print(data)
+    # uid = data['uid']a
+    # data['uid'] = uid
     data['indate'] = datetmp
     datas = data
     datas['createtime'] = datetimeTmp
     # datas['applytime'] = None
     datas['event'] = '员工申请加入公司'
     datas['description'] = '赞无描述'
-    res = All_queryLog(data)
+    res = All_queryLog(datas)
     if res is not None:
-        return jsonify({
-            "code":-1,
-            "msg":"已提交申请，请勿重复提交！"
-        })
+        print(type(res),len(res))
+        res = res[-1]
+        if res['state'] == '待审批':
+            return jsonify({
+                "code":-1,
+                "msg":"已提交申请，请勿重复提交！"
+            })
+        elif res['event'] == '员工申请加入公司' and res['state'] == '已处理':
+            return jsonify({
+                "code":-1,
+                "msg":"您已加入公司，请勿再次申请！"
+            })
+        elif res['event'] == 'hr创建公司':
+            if res['state'] == '已处理':
+                return jsonify({
+                    "code":-1,
+                    "msg":"您已拥有公司，请勿申请！"
+                })
+            return jsonify({
+                "code":-1,
+                "msg":"您的公司正在审批，请耐心等待！"
+            })
+        else:
+            User_addInDepartmentLog(datas)
+            user_applyDepartment(datas)
+            return jsonify({
+                    "code":1,
+                    "msg":"申请成功，请等待HR审核！"
+                })
     User_addInDepartmentLog(datas)
-    user_applyDepartment(data)
+    user_applyDepartment(datas)
     return jsonify({
             "code":1,
             "msg":"申请成功，请等待HR审核！"
         })
-    
 @user.route('/makeUpClock',methods = ['GET','POST'])
 def userMakeUpClock():
     uid = 1
@@ -213,8 +300,16 @@ import numpy as np
 def clockIn():
     # username = "lee"
     uid = 9
+    # if request.files.get('file') is None:
+    #     return jsonify({
+    #         "msg":"请选择图片！"
+    #     })
+    # data = json.loads(request.data)
+    # print(type(data['file']))
     userclockimg = request.files.get('file')
-    filename = userclockimg.filename
+    print(type(userclockimg))
+    # filename = userclockimg.filename
+    filename = '1231.jpg'
     print((filename.split('.')))
     path = './images/temp/' + str(uid) + '.' +  filename.split('.')[-1]
     userclockimg.save(path)
@@ -314,8 +409,8 @@ def uploadHeadImg():
 
 @user.route('/login',methods=['GET','POST'])
 def login():
-    token = request.headers['Authorization']
-    print(token)
+    # token = request.headers['Authorization']
+    # print(token)
     # return jsonify({
     #     "data":token
     # })

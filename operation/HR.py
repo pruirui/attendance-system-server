@@ -10,8 +10,17 @@ class HR_operation():
         self.__fields__ = ['id','username','password'] 
 
     def _createDepartment(self,uid,datas):
+        if datas['hourPay'] is None:
+            datas['hourPay'] = 0
+        if datas['workOverPay'] is None:
+            datas['workOverPay'] = 0
+        # new_data = User_departments(uid=uid,departmentid=datas['departmentid'],role='hr',indate=datas['createTime'][:10],\
+        #                             state='')
         new_data = HR_Department(HRuid=uid,createTime=datas['createTime'],description=datas['description'],\
-                                 departmentName=datas['departmentName'],state=datas['state'],departmentid=datas['departmentid'])
+                                 departmentName=datas['departmentName'],state=datas['state'],departmentid=datas['departmentid'],\
+                                    hourPay=datas['hourPay'],workOverPay=datas['workOverPay'],workOverLimit=datas['workOverLimit'],\
+                                        workdays=datas['workdays'],phone=datas['phone'],address=datas['address'],rmb=datas['rmb'],\
+                                            startTime=datas['startTime'],endTime=datas['endTime'])
         session.add(new_data)
         session.commit()
 

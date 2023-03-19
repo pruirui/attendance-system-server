@@ -2,6 +2,19 @@ from operation.user import User_operation
 from utils.data_process import Class_To_Data,query2dict,time2string
 # from db_config import session
 
+def  user_QueryDepartmentDetail(datas):
+    u_o = User_operation()
+    data = u_o._queryDepartmentDetail(datas)
+    if data is None:
+        return None
+    return query2dict(data)
+
+def  user_QueryAllDepartments(datas):
+    u_o = User_operation()
+    data = u_o._quertAllDepartments(datas)
+    if data is None:
+        return None
+    return query2dict(data)
 def user_QueryDepartment(uid):
     u_o = User_operation()
     data = u_o._userQueryDepartment(uid)

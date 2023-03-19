@@ -10,7 +10,7 @@ class Users(db.Model):
     phone = db.Column(db.String(45), nullable=False)
     address = db.Column(db.String(45), nullable=False)
     birthday = db.Column(db.Date, nullable=False)
-    motto = db.Column(db.String(45), nullable=False)
+    motto = db.Column(db.String(145), nullable=False)
     gender = db.Column(db.String(45), nullable=False)
     home = db.Column(db.String(45), nullable=False)
     flag = db.Column(db.Integer, nullable=False)

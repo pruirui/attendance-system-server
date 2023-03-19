@@ -7,7 +7,7 @@ class HR_Department(db.Model):
     departmentid = db.Column(db.Integer, primary_key=True)
     HRuid = db.Column(db.Integer, nullable=False)
     createTime = db.Column(db.DateTime, nullable=False,default = datetime.datetime.utcnow)
-    description = db.Column(db.String(45), nullable=False)
+    description = db.Column(db.String(445), nullable=False)
     state = db.Column(db.String(45), nullable=False)
     departmentName = db.Column(db.String(45), nullable=False)
     hourPay = db.Column(db.String(45), nullable=False)
@@ -16,6 +16,9 @@ class HR_Department(db.Model):
     startTime = db.Column(db.Time, nullable=False,default = datetime.time)
     endTime = db.Column(db.Time, nullable=False,default = datetime.time)
     workdays = db.Column(db.String(45), nullable=False)
+    phone = db.Column(db.String(45), nullable=False)
+    address = db.Column(db.String(45), nullable=False)
+    rmb = db.Column(db.String(45), nullable=False)
 
 class HR_SysConfig(db.Model):
     __tablename__ = 'sysconfigs'

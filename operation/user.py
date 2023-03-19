@@ -112,7 +112,7 @@ class User_operation():
         # session.close()
 
     def _userApplyDepartment(self,datas): 
-        new_data = User_departments(uid=datas['uid'],indate=datas['indate'],departmentid=datas['departmentid'],role="user",state="待审核")
+        new_data = User_departments(uid=datas['uid'],indate=datas['indate'],departmentid=datas['departmentid'],role="newer",state="待审核")
         session.add(new_data)
         session.commit()
         # session.close()
@@ -127,12 +127,13 @@ class User_operation():
         data = HR_UserFace.query.filter_by(id=uid).first()
         return data
     
-    def _userQueryDepartment(self,uid):
+    def _userQueryDepartment(self,uid):   #用户所在部门
         # data = User_departments.query.filter_by(uid=uid).first()
         data = db.session.query(HR_Department.departmentid,HR_Department.createTime,HR_Department.state,HR_Department.description,\
                                 HR_Department.departmentName,HR_Department.hourPay,HR_Department.workOverLimit,HR_Department.workOverPay,\
-                                    HR_Department.startTime,HR_Department.endTime,HR_Department.workdays,User_departments.role)\
-                                        .filter(User_departments.uid==uid).filter\
+                                    HR_Department.startTime,HR_Department.endTime,HR_Department.workdays,User_departments.role,\
+                                    HR_Department.address,HR_Department.rmb,HR_Department.phone,Users.username)\
+                                        .filter(User_departments.uid==uid).filter(User_departments.uid==Users.id).filter\
             (HR_Department.departmentid==User_departments.departmentid).all()
         return data
     
@@ -141,3 +142,23 @@ class User_operation():
     #                              Users.home,Users.headshot,Users.email,User_departments.state).\
     #         filter(User_departments.departmentid==departid).\
     #         filter(Users.id==User_departments.uid).all()
+
+    def _quertAllDepartments(self,datas):   #所有部门信息
+        datas = db.session.query(HR_Department.departmentid,HR_Department.createTime,HR_Department.state,HR_Department.description,\
+                                HR_Department.departmentName,HR_Department.hourPay,HR_Department.workOverLimit,HR_Department.workOverPay,\
+                                    HR_Department.startTime,HR_Department.endTime,HR_Department.workdays,\
+                                    HR_Department.address,HR_Department.rmb,HR_Department.phone,Users.username)\
+                                        .filter(HR_Department.HRuid==Users.id).\
+                                            filter(HR_Department.departmentName.like('%'+ datas['departmentName']+'%')).\
+                                                filter(HR_Department.address.like('%'+ datas['address']+'%')).all()
+        
+        return datas
+    
+    def _queryDepartmentDetail(self,data): # 部门详细信息
+        data = db.session.query(HR_Department.departmentid,HR_Department.createTime,HR_Department.state,HR_Department.description,\
+                                HR_Department.departmentName,HR_Department.hourPay,HR_Department.workOverLimit,HR_Department.workOverPay,\
+                                    HR_Department.startTime,HR_Department.endTime,HR_Department.workdays,\
+                                    HR_Department.address,HR_Department.rmb,HR_Department.phone,Users.username)\
+                                        .filter(HR_Department.departmentid==data['departmentid']).\
+                                            filter(HR_Department.HRuid==Users.id).all()
+        return data

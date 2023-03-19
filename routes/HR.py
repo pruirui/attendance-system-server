@@ -1,5 +1,6 @@
 from flask import Blueprint,request,jsonify
 from api.HR import *
+from api.shared import *
 import json,base64
 import datetime
 import os,random
@@ -133,15 +134,46 @@ def deleteDepartment():
 @HR.route('/createDepartment',methods = ["POST","GET"]) #创建部门
 def createDepartment():
     data = json.loads(request.data)
-    uid = 1
+    data['uid'] = data['HRuid']
+    uid = data['HRuid']
+    print((data))
+    # if isinstance(uid,int):
+    #     return jsonify({
+    #             "code":-1,
+    #             "msg":"用户编号错误！"
+    #         })
     dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    data['createTime'] = dateTmp
-    data['state'] = '未审批'
+    if data['createTime'] is None:
+        data['createTime'] = dateTmp
+    else:
+        data['createTime'] = datetime.datetime.strptime(data['createTime'], '%Y-%m-%d')
+
+    data['state'] = '待审批'
+    data['event'] = 'hr创建公司'
+    
     departid = random.randrange(100000,999999)
     print(departid)
     data['departmentid'] = int(departid)
-    
+    res= User_queryCreateLog(data)
+    if res is not None:
+        res = res[-1]
+        if res['event'] == "员工申请加入公司" or "hr创建公司":
+            return jsonify({
+                "code":-1,
+                "msg":"您正在加入或创建新公司，请勿重复提交！"
+            })
     # print(data['departmentName'],dateTmp,data['description'],HRname)
+    data['rmb'] += '万'
+    # data['workdays'] = int(data['workdays'])
+    datalog = data
+    # datalog['description'] = '暂无描述'
+    HR_addCreateDepartmentLog(datalog)
+    workdays = data['workdays']
+    dictDate = {"星期一":1,"星期二":2,"星期三":4,"星期四":8,"星期五":16,"星期六":32,"星期日":64}
+    tmp = 0
+    for it in workdays:
+        tmp += dictDate[it]
+    data['workdays'] = tmp
     HR_createDpartment(uid,data)
     return jsonify({
         "code":1,
