@@ -1,6 +1,13 @@
 from operation.HR import HR_operation
 from utils.data_process import query2dict
 
+def HR_grantUserHR(datas):
+    H_o = HR_operation()
+    data = H_o._grantUserHR(datas)
+    if data is None:
+        return None
+    return data
+
 def HR_queryDepartClockData(departid):
     H_o = HR_operation()
     data = H_o._QueryDepartmentClockData(departid)

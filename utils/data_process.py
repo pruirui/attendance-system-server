@@ -45,9 +45,10 @@ def query2dict(model_list):
         else:                           #这种方式获得了数据库中的个别字段  相当于select id,name from table
             
             lst = []
+            # print("某些字段")
             for result in model_list:   #当以这种方式返回的时候，result中会有一个keys()的属性
-                print("某些字段")
-                print(len(result._data),result._data)
+                
+                # print(len(result._data),result._data)
                 # lst.append([dict(zip(result._fields, r._data)) for r in result])
                 # tmp = time2string(result._data)
                 tmp = []

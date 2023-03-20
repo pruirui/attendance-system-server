@@ -1,5 +1,5 @@
 from models.HR import HR_Department,HR_SysConfig,HR_UserFace
-from models.shared import User_departments
+from models.shared import User_departments,Applications
 from models.user import  Users,User_clocks
 from db_config import db_init as db
 from db_config import session
@@ -89,7 +89,7 @@ class HR_operation():
         # data = User_departments.query.filter(User_departments.departmentid==departid).all()
         print(datas)
         data = db.session.query(Users.username,Users.phone,Users.birthday,Users.password,Users.address,Users.motto,Users.gender,\
-                                 Users.home,Users.headshot,Users.email,User_departments.state,User_departments.role).\
+                                 Users.id,Users.home,Users.headshot,Users.email,User_departments.state,User_departments.role).\
             filter(User_departments.departmentid==datas['departmentid']).\
                 filter(User_departments.state=='在职').\
             filter(Users.id==User_departments.uid).\
@@ -107,3 +107,16 @@ class HR_operation():
             filter(User_departments.uid==User_clocks.uid).all()
         print(data)
         return data
+    
+    def _grantUserHR(self,datas): #授予用户权限
+        data = Applications.query.filter_by(sender_id=datas['HRuid'],process_id=datas['uid'],event=datas['event'],state=['state'])
+        if data is not None:
+            return data
+        new_data = Applications(sender_id=datas['HRuid'],process_id=datas['uid'],create_time=datas['createTime'],\
+                                event=datas['event'],state=['state'])
+        session.add(new_data)
+        session.commit()
+
+        data = User_departments.query.filter_by(uid=datas['uid'],departmentid=datas['departmentid'])
+        data.role = 'hr'
+        db.session.commit()

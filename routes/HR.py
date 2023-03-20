@@ -1,12 +1,26 @@
+import shutil
 from flask import Blueprint,request,jsonify
 from api.HR import *
 from api.shared import *
 import json,base64
 import datetime
 import os,random
-from face.face_recognition import getFaceEmbedding
+from face.face_recognition import getFaceEmbedding,detectFace
 import numpy as np
 HR = Blueprint('HR',__name__)
+
+@HR.route('/grantUserHR',methods=['POST'])
+def grantUserHR():
+    datas = json.loads(request.data)
+    print(datas)
+    datas['createTime'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    datas['event'] = 'hr授予用户权限'
+    datas['state'] = '已处理'
+    HR_grantUserHR(datas)
+    return jsonify({
+        "code":1,
+        "msg":"权限授予成功！"
+    })
 
 @HR.route('/applyDeleteDepartment',methods = ['POST','GET'])
 def applyDeleteDepartment():
@@ -67,8 +81,9 @@ def usersInDepartment():
 
    
     for data in res:   # 拿用户头像
-        imgpath = data['headshot']
-        if imgpath is not None:
+        # imgpath = data['headshot']
+        if data['headshot'] is not None:
+            imgpath = data['headshot']
             with open(imgpath, 'rb') as f:
                 image_data = f.read()
                 encoded_image = base64.b64encode(image_data).decode('utf-8')
@@ -85,14 +100,29 @@ def usersInDepartment():
 def createUserFace():
     # data = json.loads(request.data)
     uid = request.form['uid']
+    # uid = data['uid']
+    print("uid",uid)
     img = request.files.get('file')
+    userimg = img
     data = HR_SearchUserFaceById(uid)
+    tmppath = './images/test'
     savepath = './images/userfaces'
     username = str(uid) +'.jpg'
     userFacePath = os.path.join(savepath,username) 
+    tmppath = os.path.join(tmppath,username) 
     userFacePath = userFacePath.replace('\\', '/')
+    tmppath = tmppath.replace('\\', '/')
     print(userFacePath)
-    img.save(userFacePath)
+
+    # img.save(tmppath)
+    userimg.save(tmppath)
+    if not detectFace(tmppath):
+        return jsonify({
+            "code":-1,
+            "msg":"为检测到人脸，请重新录入！"
+        })
+    shutil.move(tmppath,userFacePath)
+    
     faceEmbedding = getFaceEmbedding(userFacePath)  # 调用ai模型生成结果
     print ((len(faceEmbedding)))
     faceEmbedding = np.array(faceEmbedding)

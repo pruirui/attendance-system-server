@@ -17,22 +17,29 @@ top = 0
 right = 960
 bottom = 960
 
+def detectFace(img):
+    result = DeepFace.extract_faces(img, enforce_detection=False,detector_backend='retinaface')
+    print(result[0]['facial_area'])
+    return  result[0]['confidence']
+    #     print("人脸检测成功！")
+    # else:
+    #     print("未检测到人脸。")
 def getFaceEmbedding(img):
     faceEmbedding = DeepFace.represent(img,enforce_detection=False,model_name=model_name,detector_backend='retinaface')
     faceEmbedding = faceEmbedding[0]["embedding"]
     return faceEmbedding
 
-threshold = 0.68
+threshold = 0.60#0.68
 
 def getdistance(img1_representation,img2_representation):
     distance = dst.findCosineDistance(img1_representation, img2_representation)
     print(distance)
-    return distance < 0.68
+    return distance < 0.65
 # model = DeepFace.build_model(model_name)
 # print(model.summary())
 if __name__ == '__main__':
-    img1_path=r"images\userfaces\7.jpg"
-    img2_path=r"images\userfaces\9.jpg"
+    img1_path=r"images\userfaces\111.jpg"
+    img2_path=r"images\userfaces\1.jpg"
     # img_array = img_array.reshape((1, img_array.shape[0], img_array.shape[1], img_array.shape[2]))
     # img1 = cv2.imread(img1_path)
     # img1 = cv2.cvtColor(img1, cv2.COLOR_RGB2BGR)
@@ -61,4 +68,5 @@ if __name__ == '__main__':
                             img2_path,distance_metric = metrics[0],model_name=model_name,\
                                 enforce_detection=False,detector_backend='retinaface')
     # 展示结果，两个人不是同一个人
+    # result = detectFace(img1_path)
     print(result)

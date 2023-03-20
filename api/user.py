@@ -2,6 +2,23 @@ from operation.user import User_operation
 from utils.data_process import Class_To_Data,query2dict,time2string
 # from db_config import session
 
+def user_enterDepartmentNormal(datas):
+    u_o = User_operation()
+    res = u_o._enterDepartmentNormal(datas)
+    return res
+
+def user_queryApplicationById(id):
+    u_o = User_operation()
+    res = u_o._queryApplicationById(id)
+    return query2dict(res)
+ 
+def user_queryMyApplications(datas,idlist):
+    u_o = User_operation()
+    res = u_o._queryMyApplications(datas,idlist)
+    if res is None:
+        return None
+    return query2dict(res)
+
 def  user_QueryDepartmentDetail(datas):
     u_o = User_operation()
     data = u_o._queryDepartmentDetail(datas)
@@ -15,6 +32,7 @@ def  user_QueryAllDepartments(datas):
     if data is None:
         return None
     return query2dict(data)
+
 def user_QueryDepartment(uid):
     u_o = User_operation()
     data = u_o._userQueryDepartment(uid)
@@ -32,9 +50,9 @@ def user_QueryDepartment(uid):
     # print("OOooo")
     return data
 
-def user_QueryEmbedding(uid):
+def user_QueryEmbedding():
     u_o = User_operation()
-    data = u_o._userQueryEmbedding(uid)
+    data = u_o._userQueryEmbedding()
     if data is None:
         return None
     return query2dict(data)
@@ -77,9 +95,9 @@ def User_Leave(datas):
     data = u_o._userLeave(datas)
     return data 
 
-def User_BaseData(phone):
+def User_BaseData(uid):
     u_o = User_operation()
-    data = u_o._queryUserById(phone)
+    data = u_o._queryUserById(uid)
     if data is None:
         return None
     data = query2dict(data)

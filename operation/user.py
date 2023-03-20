@@ -3,7 +3,7 @@ from models.shared import User_departments,Applications,Leaves
 from models.HR import HR_UserFace,HR_Department
 from db_config import session
 from db_config import db_init as db
-from sqlalchemy import extract, and_
+from sqlalchemy import extract, and_,or_
 # 
 class User_operation():
     def __init__(self):
@@ -18,13 +18,13 @@ class User_operation():
         return user_list
     
     def _reg(self,kwargs):
-        new_user = Users(phone=kwargs["phone"],password=kwargs["password"],username=kwargs['username'])
+        new_user = Users(id=kwargs['uid'],phone=kwargs["phone"],password=kwargs["password"],username=kwargs['username'])
         session.add(new_user)
         session.commit()
         # session.close()
     
-    def _queryUserById(self,phone):
-        user = Users.query.filter_by(phone=phone).first()
+    def _queryUserById(self,id):
+        user = Users.query.filter_by(id=id).first()
         return user
     
     def _userUploadImg(self,uid,facepath):
@@ -123,7 +123,7 @@ class User_operation():
         db.session.commit()
         # session.close()
 
-    def _userQueryEmbedding(self,uid):
+    def _userQueryEmbedding(self):
         # data = HR_UserFace.query.filter_by(id=uid).first()
         datas = HR_UserFace.query.all()
         return datas
@@ -135,7 +135,7 @@ class User_operation():
                                     HR_Department.startTime,HR_Department.endTime,HR_Department.workdays,User_departments.role,\
                                     HR_Department.address,HR_Department.rmb,HR_Department.phone,Users.username)\
                                         .filter(User_departments.uid==uid).filter(User_departments.uid==Users.id).filter\
-            (HR_Department.departmentid==User_departments.departmentid).all()
+            (HR_Department.departmentid==User_departments.departmentid).filter(User_departments.state=='在职').all()
         return data
     
 
@@ -150,8 +150,8 @@ class User_operation():
                                     HR_Department.startTime,HR_Department.endTime,HR_Department.workdays,\
                                     HR_Department.address,HR_Department.rmb,HR_Department.phone,Users.username)\
                                         .filter(HR_Department.HRuid==Users.id).\
-                                            filter(HR_Department.departmentName.like('%'+ datas['departmentName']+'%')).\
-                                                filter(HR_Department.address.like('%'+ datas['address']+'%')).all()
+                                            filter(or_(HR_Department.departmentName.like('%'+ datas['departmentName']+'%'),Users.username.like('%'+ datas['departmentName']+'%')))\
+                                                   .filter(HR_Department.address.like('%'+ datas['address']+'%')).all()
         
         return datas
     
@@ -163,3 +163,37 @@ class User_operation():
                                         .filter(HR_Department.departmentid==data['departmentid']).\
                                             filter(HR_Department.HRuid==Users.id).all()
         return data
+    def _queryMyApplications(self,datas,idlist): #查找申请事项
+        # userdata = db.session.query().filter(Users.id==datas['uid']).first()
+        res = Applications.query.filter(or_(Applications.sender_id==datas['uid'],Applications.process_id==datas['uid'],\
+                                            Applications.department_id.in_(idlist))).all()
+
+        return res
+
+    def _queryApplicationById(self,id): #根据事项id查找内容
+        res = Applications.query.filter_by(id=id).first()
+        return res
+    
+    def _enterDepartmentNormal(self,datas): #接受员工正式进入公司
+        apply = Applications.query.filter_by(id=datas['id']).first()
+        apply.apply_time = datas['apply_time']
+        apply.process_id = datas['HRuid']
+        apply.state =datas['status']
+        db.session.commit()
+        if datas['status'] == '接受':
+            userdepart = User_departments.query.filter_by(uid=datas['uid'],departmentid=datas['departmentid']).first()
+            userdepart.role = 'user'
+            userdepart.state = '在职'
+            db.session.commit()
+        else:
+            User_departments.query.filter_by(uid=datas['uid'],departmentid=datas['departmentid']).delete()
+            db.session.commit()
+
+    # def _RefuseEnterDepartmentNormal(self,datas): #拒绝员工进入公司
+    #     apply = Applications.query.filter_by(id=datas['id']).first()
+    #     apply.apply_time = datas['apply_time']
+    #     apply.process_id = datas['HRuid']
+    #     apply.state =datas['status']
+    #     db.session.commit()
+        
+    #     userdepart

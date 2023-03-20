@@ -1,4 +1,6 @@
 
+from collections import defaultdict
+import random
 from flask import Blueprint,request,jsonify
 user = Blueprint('user',__name__)
 
@@ -7,6 +9,87 @@ from api.shared import *
 import datetime,os
 import base64
 from face.face_recognition import getFaceEmbedding,getdistance
+
+@user.route('/processMyApplications',methods = ['POST'])
+def processMyApplications():
+    datas = json.loads(request.data)
+    print(datas)
+    id = datas['id']
+    datetmp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
+    datas['apply_time'] = datetmp
+    res = user_queryApplicationById(id) #查出审批内容
+    datas['departmentid'] = res['department_id']
+    # datas['']
+    if res['event'] == '员工申请加入公司':
+        datas['status'] = datas['state']
+        datas['HRuid'] = datas['uid']
+        datas['uid'] = res['sender_id']
+        user_enterDepartmentNormal(datas)
+       
+    return jsonify({
+        "code":1,
+        "msg":"恭喜您，该员工已加入该公司！"
+    })
+
+@user.route('/queryMyApplications',methods = ['POST'])
+def queryMyApplications():
+    datas = json.loads(request.data)
+    # datetype = datas['type']
+    # print(datas['uid'])
+
+    dapart = user_QueryDepartment(datas['uid'])
+    if dapart is None:
+        idlist = []
+    else:
+        idlist = [it['departmentid'] for it in dapart]
+        print("idlist",type(idlist[0]))
+
+    res = user_queryMyApplications(datas,idlist)
+    # print("!!!!!!!!!!!!!!!!",len(res))
+    if res is None:
+        return jsonify({
+            "code":-1,
+            "msg":"暂无审批记录！"
+        })
+    resdict = {'read':[],'unread':[],'down':[]}
+    for it in res:
+        # print((it))
+        it['departmentid'] = it['department_id']
+        # it['username'] = "暂无"
+        departmentname = user_QueryDepartmentDetail(it)[0]['departmentName']
+        it['departmentname'] = departmentname
+        # print("process_id",it['process_id'])
+        # print("sender_id",it['sender_id'])
+        # if it['sender_id'] == int(datas['uid']):
+            # print("process_id",it['process_id'])
+        if it['process_id'] is None:
+            # print("none")
+            it['processname'] = '暂无'
+        else:
+            it['processname'] = User_BaseData(it['process_id'])['username']
+        # elif it['process_id'] == int(datas['uid']):
+        if it['sender_id'] is None:
+            # print("none")
+            it['sendername'] = '暂无'
+        else:
+            print("it['sender_id']",it['sender_id'])
+            res = User_BaseData(it['sender_id'])
+            # print(res)
+            it['sendername'] = User_BaseData(it['sender_id'])['username']
+
+        if it['state'] == '待审批':
+            if it['sender_id'] == int(datas['uid']):
+                resdict['read'].append(it)
+            else:
+                resdict['unread'].append(it)
+        else:
+            resdict['down'].append(it)
+    
+    # print("!!!!!!!!!!!!!!",resdict['read'])
+    return jsonify({
+        "code":1,
+        "data":resdict
+    })
 
 @user.route('/queryDepartmentDetail',methods = ['POST','GET'])
 def queryDepartmentDetail():
@@ -38,7 +121,16 @@ def queryAllDepartments():
     # departmentName = data['departmentName']
     # address = data['address']
     res = user_QueryAllDepartments(datas)
-    totals = len(res)
+    if res is None:
+        totals = 0
+        return jsonify({
+            "code":-1,
+            "msg":"未检索到部门，请重新输入公司名称！"
+        })
+    else:
+        totals = len(res)
+    print(totals)
+    
     sum = (len(res) + pageSize -1) // pageSize  #总页数
     last = pageSize*pageIndex + pageSize
     print(last,pageIndex,sum)
@@ -65,7 +157,8 @@ def userInDepartment():
     uid = data['uid']
     # data['uid'] = uid
     data = user_QueryDepartment(uid)
-    print(type(data))
+    res = data
+    print((data))
     if data is None:
         return jsonify({
             "code":-1,
@@ -85,7 +178,7 @@ def userInDepartment():
             })
     return jsonify({
         "code":1,
-        "data":data
+        "data":res
     })
 
 
@@ -299,7 +392,8 @@ import numpy as np
 @user.route('/clockIn',methods = ['GET','POST'])
 def clockIn():
     # username = "lee"
-    uid = 9
+    # uid = 9
+    temp = 8888
     # if request.files.get('file') is None:
     #     return jsonify({
     #         "msg":"请选择图片！"
@@ -312,38 +406,66 @@ def clockIn():
     filename = userclockimg.filename
     print(filename)
     print((filename.split('.')))
-    path = './images/temp/' + str(uid) + '.' +  filename.split('.')[-1]
+    path = './images/temp/' + str(temp) + '.' +  filename.split('.')[-1]
     userclockimg.save(path)
     # userclockimg = np.array(userclockimg)
     # print(len(userclockimg))
     # img = request.files.get('file')
     # userimgpath = './images/userfaces' + str(uid)
-    res = user_QueryEmbedding(uid)
+    res = user_QueryEmbedding()
     userclockimg = np.array(getFaceEmbedding(path))
     for data in res:
+        if data['faceEmbedding'] is None:
+            continue
+        # print(data['faceEmbedding'])
         userfacembedding = np.frombuffer(data['faceEmbedding']).reshape(512)
         # cos_sim = np.dot(userclockimg,userfacembedding) / (np.linalg.norm(userclockimg) * np.linalg.norm(userfacembedding))
         distance = getdistance(userclockimg,userfacembedding)
         print("userface",type(userfacembedding[0]))
         print(distance)
-    #匹配人脸
+        #匹配人脸
         if  distance:
            
+            #查询用户个人信息
+            uid = data['id']
+            print(uid)
+            user_data = User_BaseData(uid) #用户个人信息
+            depart_data = user_QueryDepartment(uid) #用户角色
+            print(depart_data)
+            if depart_data is None:
+                user_data['role'] = "newer"
+            else:
+                user_data['role'] = depart_data[0]['role']
+                
+            # data['birthday'] = data['birthday'].strftime('%Y-%m-%d')
+            imgpath = user_data['headshot']
+            if imgpath == None:
+                data['headshot'] = "未上传图片"
+            else:
+                with open(imgpath, 'rb') as f:
+                    image_data = f.read()
+                    encoded_image = base64.b64encode(image_data).decode('utf-8')
+                print(data)
+                user_data['headshot'] = encoded_image
+
             dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             data = User_queryClockBy(uid,dateTmp[:11],"签到")
             if data is not None:
                 return jsonify({
                     "code":-1,
-                    "msg":"今日已打卡，请勿重复打卡！"
+                    "msg":"今日已打卡，请勿重复打卡！",
+                    "data":user_data
                 })
             print(dateTmp[11:])
-            datefront = datetime.time(8,0,0).strftime('%H:%M:%S')
-            dateend = datetime.time(10,0,0).strftime('%H:%M:%S')
+            # datefront = datetime.time(6,0,0).strftime('%H:%M:%S')
+            datefront = depart_data[0]['startTime']
+            # dateend = datetime.time(12,0,0).strftime('%H:%M:%S')
+            dateend = depart_data[0]['endTime']
             if(dateTmp[11:] > datefront):
                 print("ok")
             print(type('!!!'))
+            User_clock(uid,dateTmp,"签到")
             if dateTmp[11:] < dateend and dateTmp[11:] > datefront:
-                User_clock(uid,dateTmp,"签到")
                 return jsonify({
                         "code":1,
                         "msg":"恭喜你,打卡成功!!!"
@@ -351,12 +473,12 @@ def clockIn():
             else:
                 return jsonify({
                         "code":-1,
-                        "msg":"打卡失败,未到签到时间!"
+                        "msg":"您已迟到!"
                     })
     #不符合人脸数据库
     return jsonify({
                 "code":-1,
-                "msg":"人脸检测失败，请重新打卡！"
+                "msg":"人脸检测失败或数据库无您人脸数据，请联系HR录入人脸！"
             })
         
    
@@ -473,7 +595,9 @@ def reg():
             "msg": "用户已存在，请重新输入用户名"
         })
     else :      # 直接注册
+        uid = random.randrange(100000,999999)
         data = User_reg({
+            "uid":uid,
             "phone":data["phone"],
             "password":data["password"],
             "username":data['username']
