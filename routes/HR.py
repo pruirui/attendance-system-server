@@ -8,6 +8,26 @@ from face.face_recognition import getFaceEmbedding
 import numpy as np
 HR = Blueprint('HR',__name__)
 
+@HR.route('/applyDeleteDepartment',methods = ['POST','GET'])
+def applyDeleteDepartment():
+    datas = json.loads(request.data)
+    datetmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    datas['departmentid'] = int(datas['departmentid'])
+    datas['event'] = 'hr删除公司'
+    datas['createTime'] = datetmp
+    datas['state'] = '待审批'
+    
+    res = HR_addDeleteDepartmentLog(datas)
+    if res is not None:
+        return jsonify({
+            "code":-1,
+            "msg":"已提交申请，请勿重复提交！"
+        })
+    return jsonify({
+        "code":1,
+        "msg":"申请已提交，请等待审核！"
+    })
+
 @HR.route('/departmentClockData',methods = ['POST','GET'])
 def departmentClockData():
     data = json.loads(request.data)
@@ -21,16 +41,32 @@ def departmentClockData():
 
 @HR.route('/usersInDepartment',methods = ['POST','GET']) 
 def usersInDepartment():
-    data = json.loads(request.data)
-    departmentid = data['departmentid']
-    datas = HR_FindAllUsersInDepartment(departmentid)
-    if data is None:
+    datas = json.loads(request.data)
+    # departmentid = datas['departmentid']
+
+    pageIndex = (datas['pageIndex']) - 1
+    # print(type(datas['pageIndex']))
+    pageSize = datas['pageSize']
+    
+    # departmentName = data['departmentName']
+    # address = data['address']
+    res = HR_FindAllUsersInDepartment(datas)
+    if res is None:
         return jsonify({
             "code":1,
             # "length":length,
             "msg":"该部门暂无员工"
         })
-    for data in datas:   # 拿用户头像
+    totals = len(res)
+    sum = (len(res) + pageSize -1) // pageSize  #总页数
+    last = pageSize*pageIndex + pageSize
+    print(last,pageIndex,sum)
+    if pageIndex == sum:
+        last = len(res)
+    res = res[pageSize*pageIndex:last]
+
+   
+    for data in res:   # 拿用户头像
         imgpath = data['headshot']
         if imgpath is not None:
             with open(imgpath, 'rb') as f:
@@ -41,8 +77,8 @@ def usersInDepartment():
     # length = len(data)
     return jsonify({
         "code":1,
-        "length":len(datas),
-        "data":data
+        "totals":totals,
+        "data":res
     })
 
 @HR.route('/createUserFace',methods = ['POST','GET'])

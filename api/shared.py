@@ -2,6 +2,14 @@ from operation.shared import Shared_operation
 
 from utils.data_process import Class_To_Data,query2dict,time2string
 
+
+def HR_addDeleteDepartmentLog(datas):
+    S_o = Shared_operation()
+    data = S_o._addDeleteDepartmentLog(datas)
+    if data is None:
+        return None
+    return query2dict(data)
+
 def HR_addCreateDepartmentLog(datas):
     S_o = Shared_operation()
     data = S_o._addCreateDepartmentLog(datas)

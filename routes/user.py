@@ -24,7 +24,7 @@ def queryDepartmentDetail():
         })
     return jsonify({
         "code":1,
-        "data":res
+        "data":res[0]
     })
 @user.route('/queryAllDepartments',methods = ['POST','GET'])
 def queryAllDepartments():
@@ -309,7 +309,8 @@ def clockIn():
     userclockimg = request.files.get('file')
     print(type(userclockimg))
     # filename = userclockimg.filename
-    filename = '1231.jpg'
+    filename = userclockimg.filename
+    print(filename)
     print((filename.split('.')))
     path = './images/temp/' + str(uid) + '.' +  filename.split('.')[-1]
     userclockimg.save(path)
@@ -317,45 +318,48 @@ def clockIn():
     # print(len(userclockimg))
     # img = request.files.get('file')
     # userimgpath = './images/userfaces' + str(uid)
-    data = user_QueryEmbedding(uid)
+    res = user_QueryEmbedding(uid)
     userclockimg = np.array(getFaceEmbedding(path))
-    userfacembedding = np.frombuffer(data['faceEmbedding']).reshape(512)
-    # cos_sim = np.dot(userclockimg,userfacembedding) / (np.linalg.norm(userclockimg) * np.linalg.norm(userfacembedding))
-    distance = getdistance(userclockimg,userfacembedding)
-    print("userface",type(userfacembedding[0]))
-    print(distance)
+    for data in res:
+        userfacembedding = np.frombuffer(data['faceEmbedding']).reshape(512)
+        # cos_sim = np.dot(userclockimg,userfacembedding) / (np.linalg.norm(userclockimg) * np.linalg.norm(userfacembedding))
+        distance = getdistance(userclockimg,userfacembedding)
+        print("userface",type(userfacembedding[0]))
+        print(distance)
     #匹配人脸
-    if not distance:
-        return jsonify({
-            "code":-1,
-            "msg":"人脸检测失败，请重新打卡！"
-        })
-
-    dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    data = User_queryClockBy(uid,dateTmp[:11],"签到")
-    if data is not None:
-        return jsonify({
-            "code":-1,
-            "msg":"今日已打卡，请勿重复打卡！"
-        })
-    print(dateTmp[11:])
-    datefront = datetime.time(8,0,0).strftime('%H:%M:%S')
-    dateend = datetime.time(10,0,0).strftime('%H:%M:%S')
-    if(dateTmp[11:] > datefront):
-        print("ok")
-    print(type('!!!'))
-    if dateTmp[11:] < dateend and dateTmp[11:] > datefront:
-        User_clock(uid,dateTmp,"签到")
-        return jsonify({
-                "code":1,
-                "msg":"恭喜你,打卡成功!!!"
-            })
-    else:
-        return jsonify({
+        if  distance:
+           
+            dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            data = User_queryClockBy(uid,dateTmp[:11],"签到")
+            if data is not None:
+                return jsonify({
+                    "code":-1,
+                    "msg":"今日已打卡，请勿重复打卡！"
+                })
+            print(dateTmp[11:])
+            datefront = datetime.time(8,0,0).strftime('%H:%M:%S')
+            dateend = datetime.time(10,0,0).strftime('%H:%M:%S')
+            if(dateTmp[11:] > datefront):
+                print("ok")
+            print(type('!!!'))
+            if dateTmp[11:] < dateend and dateTmp[11:] > datefront:
+                User_clock(uid,dateTmp,"签到")
+                return jsonify({
+                        "code":1,
+                        "msg":"恭喜你,打卡成功!!!"
+                    })
+            else:
+                return jsonify({
+                        "code":-1,
+                        "msg":"打卡失败,未到签到时间!"
+                    })
+    #不符合人脸数据库
+    return jsonify({
                 "code":-1,
-                "msg":"打卡失败,未到签到时间!"
+                "msg":"人脸检测失败，请重新打卡！"
             })
-    
+        
+   
 @user.route('/list',methods=['GET'])
 def list():
     # api的业务逻辑方法

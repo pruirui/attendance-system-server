@@ -124,8 +124,9 @@ class User_operation():
         # session.close()
 
     def _userQueryEmbedding(self,uid):
-        data = HR_UserFace.query.filter_by(id=uid).first()
-        return data
+        # data = HR_UserFace.query.filter_by(id=uid).first()
+        datas = HR_UserFace.query.all()
+        return datas
     
     def _userQueryDepartment(self,uid):   #用户所在部门
         # data = User_departments.query.filter_by(uid=uid).first()

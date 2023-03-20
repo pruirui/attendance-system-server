@@ -13,9 +13,9 @@ def HR_updateDepartConfig(departid,datas):
         return None
     return query2dict(data)
 
-def HR_FindAllUsersInDepartment(departid):
+def HR_FindAllUsersInDepartment(datas):
     H_o = HR_operation()
-    data = H_o._FindUsersInDepartment(departid)
+    data = H_o._FindUsersInDepartment(datas)
     print(type(data))
     if data is None:
         return None

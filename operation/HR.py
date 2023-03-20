@@ -5,6 +5,7 @@ from db_config import db_init as db
 from db_config import session
 from sqlalchemy import distinct
 from collections import OrderedDict
+from sqlalchemy import extract, and_,or_
 class HR_operation():
     def __init__(self):
         self.__fields__ = ['id','username','password'] 
@@ -84,12 +85,15 @@ class HR_operation():
         db.session.commit()
         return data
 
-    def _FindUsersInDepartment(self,departid):  # 查找部门所有员工
+    def _FindUsersInDepartment(self,datas):  # 查找部门所有员工
         # data = User_departments.query.filter(User_departments.departmentid==departid).all()
+        print(datas)
         data = db.session.query(Users.username,Users.phone,Users.birthday,Users.password,Users.address,Users.motto,Users.gender,\
-                                 Users.home,Users.headshot,Users.email,User_departments.state).\
-            filter(User_departments.departmentid==departid).\
-            filter(Users.id==User_departments.uid).all()
+                                 Users.home,Users.headshot,Users.email,User_departments.state,User_departments.role).\
+            filter(User_departments.departmentid==datas['departmentid']).\
+                filter(User_departments.state=='在职').\
+            filter(Users.id==User_departments.uid).\
+                filter(or_(Users.phone.like('%'+ datas['querystring']+'%'),Users.username.like('%'+ datas['querystring']+'%'))).all()
         
         # print(dir(data1[0]),data1[0]._fields,data1[0]._data)
         # print((data1).__name__,type(data1[0]))

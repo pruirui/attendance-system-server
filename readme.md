@@ -1,9 +1,8 @@
-
-#                                                            mysql=====>sql
-# flask ---> pymysql库--> sqlalchemy（ORM）==》flask_sqlalchemy ====>面向对象方式操作数据
-#                                            models     模型类
-#                                            operation  调用模型类数据库
-#                                            api        一系列方法：业务逻辑    数据封装
-#                                            routes     路由配置   request  retu
-#                                            app.py
-
+# 该项目作为实训期间智慧考勤系统的后端部分，项目整体目录如下：
+* route 生成前端访问接口路由
+* api 接口调用实际业务的操作接口
+* operation 具体实现业务方法
+* model 将数据库与类绑定形成数据类
+* util 处理数据查询结果
+* face 放置人脸识别模型及方法
+* images 人脸数据、用户头像等
