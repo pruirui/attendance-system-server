@@ -9,6 +9,76 @@ from face.face_recognition import getFaceEmbedding,detectFace
 import numpy as np
 HR = Blueprint('HR',__name__)
 
+@HR.route('/dismissUserInDepart',methods = ['POST'])
+def dismissUserInDepart():
+    datas = json.loads(request.data)
+    print(datas)
+    datetmp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    datas['createtime'] = datetmp
+    datas['event'] = 'hr辞退员工'
+    
+    res = User_addInDepartmentLog(datas)
+    if res:
+        return jsonify({
+            "code":-1,
+            "msg":"请勿重复发送辞退申请！"
+        })
+    return jsonify({
+        "code":1,
+        "msg":"辞退成功，请等待员工确认！"
+    })
+
+@HR.route('/inviteUserJoinDepart',methods = ['POST'])
+def inviteUserJoinDepart():
+    datas = json.loads(request.data)
+    print(datas)
+    datetmp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    datas['createtime'] = datetmp
+    datas['event'] = 'hr邀请员工'
+
+    res = User_addInDepartmentLog(datas)
+    if res:
+        return jsonify({
+            "code":-1,
+            "msg":"请勿重复邀请！"
+        })
+    return jsonify({
+        "code":1,
+        "msg":"邀请成功，请等待员工确认！"
+    })
+
+@HR.route('/queryAllUsers',methods = ['POST'])
+def queryAllUsers():
+    datas = json.loads(request.data)
+    print(datas)
+    pageIndex = (datas['pageIndex']) - 1
+    # print(type(datas['pageIndex']))
+    pageSize = datas['pageSize']
+    res = HR_queryAllUsers(datas)
+    if res is None:
+        totals = 0
+        return jsonify({
+            "code":-1,
+            "msg":"暂无用户"
+        })
+    totals = len(res)
+    sum = (len(res) + pageSize -1) // pageSize  #总页数
+    last = pageSize*pageIndex + pageSize
+    if pageIndex == sum:
+        last = len(res)
+    res = res[pageSize*pageIndex:last]
+
+
+    for it in res:
+        if it['headshot'] is None or os.path.exists(it['headshot'] is False):
+            it['headshot'] = '/images/headshots/8888.jpg'
+
+    return jsonify({
+        "code":1,
+        "data":(res),
+        "totals":totals
+    })
+
 @HR.route('/grantUserHR',methods=['POST'])
 def grantUserHR():
     datas = json.loads(request.data)
@@ -87,8 +157,8 @@ def usersInDepartment():
             with open(imgpath, 'rb') as f:
                 image_data = f.read()
                 encoded_image = base64.b64encode(image_data).decode('utf-8')
-            print(data)
-            data['headshot'] = encoded_image
+                print(data)
+                data['headshot'] = encoded_image
     # length = len(data)
     return jsonify({
         "code":1,
@@ -115,6 +185,7 @@ def createUserFace():
     print(userFacePath)
 
     # img.save(tmppath)
+    
     userimg.save(tmppath)
     if not detectFace(tmppath):
         return jsonify({
@@ -165,7 +236,15 @@ def querySysConfig():
 @HR.route('/updateDepartConfig',methods = ["POST","GET"])
 def updateDepartConfig():
     datas = json.loads(request.data)
-    departid = 3
+    departid = datas['departmentid']
+
+    workdays = (datas['workdays'])
+    dictDate = {"星期一":1,"星期二":2,"星期三":4,"星期四":8,"星期五":16,"星期六":32,"星期日":64}
+    tmp = 0
+    for it in workdays:
+        tmp += dictDate[it]
+    datas['workdays'] = tmp
+    print(datas['workdays'])
     HR_updateDepartConfig(departid,datas)
     return jsonify({
         "code":1,
@@ -216,7 +295,7 @@ def createDepartment():
 
     data['state'] = '待审批'
     data['event'] = 'hr创建公司'
-    
+    data['process_id'] = 0
     departid = random.randrange(100000,999999)
     print(departid)
     data['departmentid'] = int(departid)

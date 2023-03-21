@@ -1,6 +1,13 @@
 from operation.HR import HR_operation
 from utils.data_process import query2dict
 
+def HR_queryAllUsers(datas):
+    H_o = HR_operation()
+    res = H_o._queryAllUsers(datas)
+    if res is None:
+        return None
+    return query2dict(res)
+
 def HR_grantUserHR(datas):
     H_o = HR_operation()
     data = H_o._grantUserHR(datas)

@@ -25,7 +25,8 @@ def User_queryCreateLog(datas):
 def User_addInDepartmentLog(datas):
     S_o = Shared_operation()
     data = S_o._addInDepartmentLog(datas)
-    return data
+    if data is not None:
+        return query2dict(data)
 
 def All_queryLog(datas):
     S_o = Shared_operation()

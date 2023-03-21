@@ -5,7 +5,7 @@ from db_config import db_init as db
 from db_config import session
 from sqlalchemy import distinct
 from collections import OrderedDict
-from sqlalchemy import extract, and_,or_
+from sqlalchemy import extract, and_,or_,except_
 class HR_operation():
     def __init__(self):
         self.__fields__ = ['id','username','password'] 
@@ -73,17 +73,21 @@ class HR_operation():
         data.workOverLimit = datas['workOverLimit']
         data.startTime = datas['startTime']
         data.endTime = datas['endTime']
-        # data.workdays = datas['workdays']
+        data.description = datas['description']
+        data.workdays = datas['workdays']
+        data.phone = datas['phone']
+        data.address = datas['address']
+        data.rmb = datas['rmb']
 
         db.session.commit()
-        return data
+        # return data
     
     def _DeleteDepartment(self,departid):  #删除部门
         data = HR_Department.query.filter(HR_Department.departmentid == departid).delete()
         # data.workdays = datas['workdays']
         
         db.session.commit()
-        return data
+        # return data
 
     def _FindUsersInDepartment(self,datas):  # 查找部门所有员工
         # data = User_departments.query.filter(User_departments.departmentid==departid).all()
@@ -109,14 +113,30 @@ class HR_operation():
         return data
     
     def _grantUserHR(self,datas): #授予用户权限
-        data = Applications.query.filter_by(sender_id=datas['HRuid'],process_id=datas['uid'],event=datas['event'],state=['state'])
-        if data is not None:
-            return data
+        # data = Applications.query.filter_by(sender_id=datas['HRuid'],process_id=datas['uid'],event=datas['event'],state=['state'])
+        # if data is not None:
+        #     return data
         new_data = Applications(sender_id=datas['HRuid'],process_id=datas['uid'],create_time=datas['createTime'],\
-                                event=datas['event'],state=['state'])
+                                event=datas['event'],state=datas['state'],department_id=datas['departmentid'])
         session.add(new_data)
         session.commit()
-
-        data = User_departments.query.filter_by(uid=datas['uid'],departmentid=datas['departmentid'])
+        
+        data = User_departments.query.filter_by(uid=datas['uid'],departmentid=datas['departmentid']).first()
         data.role = 'hr'
+        print("成功！")
+        
         db.session.commit()
+
+    def _queryAllUsers(self,datas): #查询所有没有加入公司的用户
+        res = db.session.query(Users.username,Users.phone,Users.birthday,Users.password,Users.address,Users.motto,Users.gender,\
+                                 Users.id,Users.home,Users.headshot,Users.email).\
+                                    filter(or_(Users.phone.like('%'+ datas['querystring'] +'%'),Users.username.like('%'+ datas['querystring'] +'%')))
+
+        res2 = (db.session.query(Users.username,Users.phone,Users.birthday,Users.password,Users.address,Users.motto,Users.gender,\
+                                 Users.id,Users.home,Users.headshot,Users.email).filter(User_departments.uid==Users.id))
+        
+        res = res.except_(res2).all()
+        return res
+
+    # def _inviteUserLog(self,datas): #hr邀请员工
+    #     new_data = Applications(sender_id=datas['HRuid'],process_id=datas['uid'],event='')

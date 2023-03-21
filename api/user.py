@@ -2,6 +2,11 @@ from operation.user import User_operation
 from utils.data_process import Class_To_Data,query2dict,time2string
 # from db_config import session
 
+def User_updatePassword(datas):
+    u_o = User_operation()
+    res = u_o._updatePassword(datas)
+    return res
+
 def user_enterDepartmentNormal(datas):
     u_o = User_operation()
     res = u_o._enterDepartmentNormal(datas)
@@ -109,13 +114,14 @@ def Alluser_ClockData():
     data = query2dict(data)
     return data
 
-def User_ClockData(uid):
+def User_ClockData(datas):
     u_o = User_operation()
-    data = u_o._userClockData(uid)
-    if data is None:
-        return None
-    data = query2dict(data)
-    return data
+    data1,data2 = u_o._userClockData(datas)
+    if data1 is not None:
+        data1 = query2dict(data1)
+    if data2 is not None:
+        data2 = query2dict(data2)
+    return data1,data2
 
 def User_clock(uid,time,note):
     u_o = User_operation()
@@ -147,7 +153,7 @@ def User_update(uid,datas):
 
 def User_isExisted(phone):  
     u_o = User_operation()
-    data = u_o._queryUserById(phone)
+    data = u_o._queryUserByPhone(phone)
     if data is None:
         return 0
     data = query2dict(data)
