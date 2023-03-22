@@ -58,7 +58,7 @@ def query2dict(model_list):
             return lst
             # res = result_to_dict(model_list)
     else:                   #不是list,说明是用的get() 或者 first()查询的，得到的结果是一个对象
-        print("first")
+        # print("first")
         if isinstance(model_list,db.Model):   # 这种方式是获得的整个对象  相当于 select * from table limit=1
             dic = {}
             for col in model_list.__table__.columns:

@@ -72,8 +72,10 @@ class User_operation():
     def _userClockData(self,datas):
         # data_list = User_clocks.query.filter_by(uid=uid,).all()
         print(type(datas['month']))
-        data_list_in = User_clocks.query.filter(User_clocks.note=='签到').filter(extract('month',User_clocks.clockTime) == datas['month']).all()
-        data_list_out = User_clocks.query.filter(User_clocks.note=='签退').filter(extract('month',User_clocks.clockTime) == datas['month']).all()
+        data_list_in = User_clocks.query.filter(User_clocks.note=='签到').filter(extract('month',User_clocks.clockTime) == datas['month']).\
+            filter(User_clocks.uid==datas['uid']).all()
+        data_list_out = User_clocks.query.filter(User_clocks.note=='签退').filter(extract('month',User_clocks.clockTime) == datas['month']).\
+            filter(User_clocks.uid==datas['uid']).all()
                     # filter(User_clocks.uid==datas['uid']).all()
         # print(type(data_list))
         return data_list_in,data_list_out
@@ -119,12 +121,13 @@ class User_operation():
         if 'description' not in datas.keys():
             datas['description'] = '赞无描述'
         data = Applications.query.filter_by(sender_id=datas['uid'],makeup_clock=datas['makeup_clock'],\
-                            event=datas['event'],description=datas['description'],state="待审批",content=datas['content']).first()
+                            event=datas['event'],content=datas['content']).first()
         if data is not None:
             return data
         
         new_data = Applications(sender_id=datas['uid'],create_time=datas['createtime'],makeup_clock=datas['makeup_clock'],\
-                            event=datas['event'],description=datas['description'],state="待审批",content=datas['content'])
+                            event=datas['event'],description=datas['description'],state="待审批",content=datas['content']\
+                                ,department_id=datas['departmentid'])
         session.add(new_data)
         session.commit()
         # session.close()
@@ -192,8 +195,29 @@ class User_operation():
         res = Applications.query.filter_by(id=id).first()
         return res
     
-    def _enterDepartmentNormal(self,datas): #接受员工正式进入公司
-        if datas['event'] == 'hr辞退员工':
+    def _enterDepartmentNormal(self,datas): #处理个人审批事项（hr user admin）
+        if datas['event'] == '员工申请补打卡':
+            apply = Applications.query.filter_by(id=datas['id']).first()
+            apply.apply_time = datas['apply_time']
+            apply.state =datas['status']
+            db.session.commit()
+            if datas['status'] == '接受':
+                new_data = User_clocks(uid=datas['uid'],note=datas['content'],clockTime=datas['date'])
+                session.add(new_data)
+                session.commit()
+
+        elif datas['event'] == 'hr创建公司':
+            apply = Applications.query.filter_by(id=datas['id']).first()
+            apply.apply_time = datas['apply_time']
+            apply.state =datas['status']
+            db.session.commit()
+            if datas['status'] == '接受':
+                new_data = User_departments(uid=datas['HRuid'],departmentid=datas['departmentid'],role='hr',\
+                                            indate=datas['apply_time'][:10],state='在职')
+                session.add(new_data)
+                session.commit()
+        
+        elif datas['event'] == 'hr辞退员工':
             apply = Applications.query.filter_by(id=datas['id']).first()
             apply.apply_time = datas['apply_time']
             apply.state =datas['status']

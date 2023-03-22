@@ -42,7 +42,7 @@ def manualClockIn():
 @user.route('/processMyApplications',methods = ['POST'])
 def processMyApplications():
     datas = json.loads(request.data)
-    print(datas)
+    print('/processMyApplications',datas)
     id = datas['id']
     datetmp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
     datas['apply_time'] = datetmp
@@ -55,7 +55,7 @@ def processMyApplications():
             "code":-1,
             "msg":"输入处理事项类型！"
         })
-    if res['event'] == '员工申请加入公司':
+    elif res['event'] == '员工申请加入公司':
         datas['event'] = res['event']
         datas['status'] = datas['state']
         datas['HRuid'] = datas['uid']
@@ -65,7 +65,7 @@ def processMyApplications():
             "code":1,
             "msg":"您已"+ datas['status'] +"该员工加入公司！"
         })
-    if res['event'] == 'hr邀请员工':
+    elif res['event'] == 'hr邀请员工':
         datas['status'] = datas['state']
         datas['event'] = res['event']
         user_enterDepartmentNormal(datas)
@@ -74,7 +74,7 @@ def processMyApplications():
             "msg":"您已"+ datas['status'] +"加入该公司！"
         })
 
-    if res['event'] == 'hr辞退员工':
+    elif res['event'] == 'hr辞退员工':
         print(datas)
         datas['status'] = datas['state']
         datas['event'] = res['event']
@@ -82,6 +82,29 @@ def processMyApplications():
         return jsonify({
             "code":1,
             "msg":"您已"+ datas['status'] +"辞退该公司！"
+        })
+    elif res['event'] == 'hr创建公司':
+        datas['status'] = datas['state'] 
+        datas['event'] = res['event']   
+        datas['uid'] = res['sender_id']
+        user_enterDepartmentNormal(datas)
+        return jsonify({
+            "code":1,
+            "msg":"管理员已"+ datas['status'] +"创建公司！"
+        })
+    elif res['event'] == '员工申请补打卡':
+        datas['uid'] = res['sender_id']
+        datas['event'] = res['event']
+        datas['status'] = datas['state'] 
+        depart = user_QueryDepartmentDetail(res['departmentid'])[0]
+        if res['content'] == '签到':
+            datas['date'] =datas['date'] + " " + depart['startTime']  
+        else :
+            datas['date'] =datas['date'] + " " + depart['endTime']  
+        user_enterDepartmentNormal(datas)
+        return jsonify({
+            "code":1,
+            "msg":"HR已"+ datas['status'] +"申请补打卡！"
         })
 
 @user.route('/queryMyApplications',methods = ['POST'])
@@ -96,7 +119,7 @@ def queryMyApplications():
     if depart is None:
         idlist = []
     else:
-        print(depart)
+        # print(depart)
         for it in depart:
             if it['role'] == 'hr':
                 idlist.append(it['departmentid'])
@@ -133,7 +156,7 @@ def queryMyApplications():
             # print("none")
             it['sendername'] = '暂无'
         else:
-            print("it['sender_id']",it['sender_id'])
+            # print("it['sender_id']",it['sender_id'])
             res = User_BaseData(it['sender_id'])
             # print(res)
             it['sendername'] = User_BaseData(it['sender_id'])['username']
@@ -147,6 +170,9 @@ def queryMyApplications():
             resdict['down'].append(it)
     
     # print("!!!!!!!!!!!!!!",resdict['read'])
+    resdict['down'] = resdict['down'][::-1]
+    resdict['read'] = resdict['read'][::-1]
+    resdict['unread'] = resdict['unread'][::-1]
     return jsonify({
         "code":1,
         "data":resdict
@@ -346,15 +372,18 @@ def userApplyDepartment():
         })
 @user.route('/makeUpClock',methods = ['GET','POST'])
 def userMakeUpClock():
-    uid = 1
     # dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     data = json.loads(request.data)
     datetimeTmp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
     datetmp = datetime.datetime.strptime(data['date'],'%Y-%m-%d').strftime('%Y-%m-%d')
-    print((datetmp))
-    data['uid'] = uid
+    depart = user_QueryDepartment(data['uid'])[0]
+    # print((datetmp))
     data['event'] = '员工申请补打卡'
-    data['makeup_clock'] = datetmp
+    # if data['content'] == '签到':
+    #     data['makeup_clock'] = datetmp + " " +depart['startTime']
+    # else:
+    #    
+    data['makeup_clock'] = datetmp 
     data['createtime'] = datetimeTmp
     res = User_MakeUpClock(data)
     if res is not None:
@@ -410,13 +439,16 @@ def userBaseData():
     # phone = '17365691811'
     data = json.loads(request.data)
     uid = data['uid']
+    
     data = User_BaseData(uid)
     depart_data = user_QueryDepartment(uid) #用户角色
-    print(depart_data)
+    # print(depart_data)
     if depart_data is None:
         data['role'] = "newer"
     else:
         data['role'] = depart_data[0]['role']
+    if uid == '0':
+        data['role'] = "admin"
     if data is None:
         return jsonify({
             "code":-1,
@@ -425,13 +457,18 @@ def userBaseData():
     if data['birthday'] is not None:
         data['birthday'] = data['birthday'][:10]
 
-    imgpath = data['headshot']
-    if imgpath is not None:
-        with open(imgpath, 'rb') as f:
-            image_data = f.read()
-            encoded_image = base64.b64encode(image_data).decode('utf-8')
-            print(data)
-            data['headshot'] = encoded_image
+    # if  os.path.exists(data['headshot']) is True:
+    #     print("!!!")
+    # print((os.path.exists(data['headshot'])))
+    print(data['headshot'])
+    if data['headshot'] is None or not os.path.exists(data['headshot']):
+        # lee = random.randrange(1,300)
+        # print("data['uid']",data['uid'])
+        lee = int(uid) % 300 + 1
+        data['headshot'] = '/images/headshots/'+ str(lee) +'.jpg'
+    else:
+        data['headshot'] = data['headshot'][1:]
+    
     return jsonify({
         "code":1,
         "data":data
@@ -443,7 +480,100 @@ def allUserClockData():
     print(data[0])
     return jsonify(data)
 
-@user.route('/userClockData',methods = ['GET','POST']) #每月打卡数据
+@user.route('/userClockInfo',methods = ['POST']) #个人考勤信息页面
+def userClockInfo():
+    datas = json.loads(request.data)
+    datas['month'] = '3'
+    resIn,resOut = User_ClockData(datas)  #签到签退数据
+    if resIn is None:
+        resInDate = []
+        resInTime = []
+    else:
+        resInDate = [it['clockTime'][:10] for it in resIn]
+        resInTime = [it['clockTime'] for it in resIn]
+    if resOut is None:
+        resOutDate = []
+        resOutTime = []
+    else:
+        resOutDate = [it['clockTime'][:10] for it in resOut]
+        resOutTime = [it['clockTime'] for it in resOut]  #具体时间
+
+    def date_range(start_date, end_date):
+        datelist = []
+        for n in range(int((end_date - start_date).days)+1):
+            datelist.append((start_date + datetime.timedelta(n)))
+        return datelist
+    res = {}
+    # datas['month'] = int(datas['month'])
+    datetmp = datetime.date.today()
+    datetmp = datetmp.strftime("%Y-%m-%d").split('-')
+    
+    dateend = calendar.monthrange(2023, int(datas['month']))[1]  
+    if int(datas['month']) == int(datetmp[1]):
+        dateend = int(datetmp[-1])
+    # print(datetmp[1],dateend)
+    start_date = datetime.datetime(2023, int(datas['month']), 1)  # 开始日期
+    end_date = datetime.datetime(2023, int(datas['month']), dateend) #结束时间
+    
+    depart_data = user_QueryDepartment(datas['uid']) #查询公司打卡时间设置
+    dateIn = depart_data[0]['startTime']
+    dateOut = depart_data[0]['endTime']
+    print("dateIn,dateOut",dateIn,dateOut)
+
+    allin,allout,late,advance= 0,0,0,0  #统计未打卡
+    for it in (date_range(start_date,end_date)):
+        if it.strftime("%Y-%m-%d") not in (resInDate):
+            allout += 1
+        if it.strftime("%Y-%m-%d") not in (resOutDate):
+            allout += 1
+
+    resInDate ,resOutDate= [],[]
+    for it in resIn:
+        if it['clockTime'][11:] < dateIn:
+            resInDate.append(it['clockTime'][:10])
+    for it in resOut:
+        if it['clockTime'][11:] > dateOut:
+            resOutDate.append(it['clockTime'][:10]) #统计正常打卡
+    print("resIn ,resOut",resIn ,resOut)
+    print("resInDate ,resOutDate",resInDate ,resOutDate)
+    # print(date_range(start_date,end_date))
+    for it in (date_range(start_date,end_date)):
+        if it.strftime("%Y-%m-%d") in (resInDate): 
+            allin += 1
+        if it.strftime("%Y-%m-%d") in (resOutDate):
+            allin += 1
+
+    for it in resInTime:
+        if it[11:] > dateIn:
+            late += 1
+    for it in resOutTime:
+        if it[11:] < dateOut: 
+            advance += 1
+    
+    clockTimeLine = {}
+    tmp = {}
+    for it in resIn:
+        tmp[it['clockTime'][:10]] = it['clockTime'][11:]
+    clockTimeLine['clockin'] = tmp
+    tmp = {}
+    for it in resOut:
+        tmp[it['clockTime'][:10]] = it['clockTime'][11:]
+    clockTimeLine['clockout'] = tmp
+    
+    res['zhexiantu'] = clockTimeLine
+    tmp = {}
+    tmp["daka"] = allin
+    tmp["weidaka"] = allout
+    tmp["zhidao"] = late
+    tmp["zaotui"] = advance
+    res['bing'] = tmp
+
+    return jsonify({
+        "code":1,
+        "data":res
+    })
+
+@user.route('/userClockData',methods = ['GET','POST']) #每月打卡数据-日历显示（我的打卡）
 def userClockData():
     datas = json.loads(request.data)
     print('/userClockData',datas)
@@ -456,7 +586,7 @@ def userClockData():
         resOut = []
     else:
         resOut = [it['clockTime'][:10] for it in resOut]
-
+    # print(resIn,resOut)
     def date_range(start_date, end_date):
         datelist = []
         for n in range(int((end_date - start_date).days)+1):
@@ -469,25 +599,26 @@ def userClockData():
     datetmp = datetmp.strftime("%Y-%m-%d").split('-')
     
     dateend = calendar.monthrange(2023, int(datas['month']))[1]  
-    if datas['month'] == datetmp[1]:
+    if int(datas['month']) == int(datetmp[1]):
         dateend = int(datetmp[-1])
-    print(dateend)
+    print(datetmp[1],dateend)
     start_date = datetime.datetime(2023, int(datas['month']), 1)  # 开始日期
     end_date = datetime.datetime(2023, int(datas['month']), dateend)
-    print(date_range(start_date,end_date))
+    # print(date_range(start_date,end_date))
     for it in (date_range(start_date,end_date)):
-        if it.strftime("%Y-%m-%d") not in (resIn,resOut):
+        if it.strftime("%Y-%m-%d") not in (resIn+resOut):
+            print(resIn,resOut)
             res[it.strftime("%Y-%m-%d")] = 3
-        elif it.strftime("%Y-%m-%d") in (resIn):
-            res[it.strftime("%Y-%m-%d")] = 1
+        elif it.strftime("%Y-%m-%d") in (resIn) and it.strftime("%Y-%m-%d") in (resOut):
+            res[it.strftime("%Y-%m-%d")] = 0
         elif it.strftime("%Y-%m-%d") in (resOut):
             res[it.strftime("%Y-%m-%d")] = 2
         else:
-            res[it.strftime("%Y-%m-%d")] = 0
-
+            res[it.strftime("%Y-%m-%d")] = 1
+    # print(res)
     if res is None:
         return jsonify({
-            "code":1,
+            "code":-1,
             "data":"无打卡数据"
         })
     return jsonify({
@@ -658,8 +789,13 @@ def updatePassword():
 
 @user.route('/uploadHeadImg',methods=['GET','POST'])
 def uploadHeadImg():
+    # datas = json.loads(request.data)
+    # print(datas)
     uid = request.form['uid']
     img = request.files.get('file')
+    print(uid,img)
+    # img = request.files['file']
+    # print(uid,img)
     savepath = './images/headshots'
     if img.filename[-4:] not in ['.jpg','.png','jpeg']:
         return jsonify({
@@ -673,6 +809,7 @@ def uploadHeadImg():
     print(userFacePath)
     img.save(userFacePath)
     # data = user_uploadHeadImg(uid,userFacePath)
+    user_uploadHeadImg(uid,userFacePath)
     return jsonify({
         "code":1,
         "msg":"用户头像添加成功！！！"
@@ -700,6 +837,8 @@ def login():
             data['role'] = depart_data[0]['role']
         # data['birthday'] = data['birthday'].strftime('%Y-%m-%d')
         imgpath = data['headshot']
+        if data['phone'] == 'admin':
+            data['role'] = 'admin'
         if imgpath == None:
             data['headshot'] = "未上传图片"
         else:

@@ -1,3 +1,4 @@
+from sqlalchemy import or_
 from models.shared import Applications
 from db_config import session
 from db_config import db_init as db
@@ -35,7 +36,8 @@ class Shared_operation():
         return data
 
     def _queryCreateLog(self,datas):
-        data = Applications.query.filter_by(sender_id=datas['uid']).all()
+        data = db.session.query(Applications).filter(Applications.sender_id==datas['uid'],Applications.event.like("%" + "公司" +"%"),\
+                                       Applications.state=='待审批').all()
         return data
     
     def _addCreateDepartmentLog(self,datas):

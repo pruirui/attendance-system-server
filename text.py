@@ -94,7 +94,7 @@ def generator():
             n = 0
             sdatetmp = ['6:00:00','7:00:00','8:00:00','9:00:00','10:00:00','11:00:00']
             edatetmp = ['16:00:00','17:00:00','18:00:00','19:00:00','20:00:00','21:00:00','22:00:00','23:00:00']
-            for i in range(200):
+            for i in range(50):
                 n += 1
               
                 # departments
@@ -127,7 +127,7 @@ def generator():
                 gender = ['男','女'][random.randrange(2)]
                 home = useraddress
                 flag = [0,1][random.randrange(2)]
-                headshot ='./images/headshots/' + str(uid) + '.jpg'
+                headshot ='/images/headshots/' + str(uid) + '.jpg'
                 email = fake.email().replace('example',['google','163','qq','122','facebook','bytes'][random.randrange(6)])
                 
                 # user_departments
@@ -145,34 +145,34 @@ def generator():
                     VALUES (%s, "%s", "%s", "%s", "%s", "%s", "%s","%s", "%s", %s, "%s", "%s"); \
                     ' % (uid,username,password,userphone,useraddress,birthday,motto,gender,home,\
                          flag,headshot,email))
-                cursor.execute(' \
-                    INSERT INTO `departments` (departmentid, HRuid, createTime, state, description, departmentName,\
-                                hourPay,workOverPay,workOverLimit,startTime,endTime,workdays,phone,address,rmb) \
-                    VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s","%s", "%s", "%s","%s", "%s", "%s", "%s","%s"); \
-                    ' % (departmentid,uid,create_time,stat,descri,departmentname,hourpay,workOverPay,workOverLimit,\
-                         startTime,endTime,workdays,phone,address,rmb))
-                cursor.execute(' \
-                    INSERT INTO `user_departments` (uid,departmentid,role,indate,state)\
-                    VALUES (%s, %s, "%s", "%s", "%s"); \
-                    ' % (uid,departmentid,role,indate,state))
+                # cursor.execute(' \
+                #     INSERT INTO `departments` (departmentid, HRuid, createTime, state, description, departmentName,\
+                #                 hourPay,workOverPay,workOverLimit,startTime,endTime,workdays,phone,address,rmb) \
+                #     VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s","%s", "%s", "%s","%s", "%s", "%s", "%s","%s"); \
+                #     ' % (departmentid,uid,create_time,stat,descri,departmentname,hourpay,workOverPay,workOverLimit,\
+                #          startTime,endTime,workdays,phone,address,rmb))
+                # cursor.execute(' \
+                #     INSERT INTO `user_departments` (uid,departmentid,role,indate,state)\
+                #     VALUES (%s, %s, "%s", "%s", "%s"); \
+                #     ' % (uid,departmentid,role,indate,state))
                 
                 #user_others
-                for lee in range(30):  # 每个部门30个员工
-                    uid = random.randrange(100000,999999) 
-                    username = fake.name()
-                    password = generate_password(10)
-                    userphone = fake.phone_number()
-                    useraddress = fake.address().split('座')[0][:-1]
-                    birthday = fake.date_of_birth(minimum_age=20, maximum_age=35)
-                    motto = fake2.sentence(nb_words=6, variable_nb_words=True)
-                    gender = ['男','女'][random.randrange(2)]
-                    home = useraddress
-                    flag = [0,1][random.randrange(2)]
-                    headshot ='./images/headshots/' + str(uid) + '.jpg'
-                    email = fake.email().replace('example',['google','163','qq','122','facebook','bytes'][random.randrange(6)])
-                    # user_departments users
-                    for x in range(1,29): #每个员工30天打卡记录
-                        clockTime = randomtimes('2023-2-01 07:00:00','2023-2-01 09:00:00',1)
+                # for lee in range(30):  # 每个部门30个员工
+                #     uid = random.randrange(100000,999999) 
+                #     username = fake.name()
+                #     password = generate_password(10)
+                #     userphone = fake.phone_number()
+                #     useraddress = fake.address().split('座')[0][:-1]
+                #     birthday = fake.date_of_birth(minimum_age=20, maximum_age=35)
+                #     motto = fake2.sentence(nb_words=6, variable_nb_words=True)
+                #     gender = ['男','女'][random.randrange(2)]
+                #     home = useraddress
+                #     flag = [0,1][random.randrange(2)]
+                #     headshot ='./images/headshots/' + str(uid) + '.jpg'
+                #     email = fake.email().replace('example',['google','163','qq','122','facebook','bytes'][random.randrange(6)])
+                #     # user_departments users
+                #     for x in range(1,29): #每个员工30天打卡记录
+                #         clockTime = randomtimes('2023-2-01 07:00:00','2023-2-01 09:00:00',1)
 
             conn.commit()
             cursor.close()
@@ -203,5 +203,5 @@ if __name__ == '__main__' :
     # print('./images/headshots/' + str('112313') + '.jpg') 
     # # print(random.randrange(1,5))
     # print(fake.email().replace('example',['google','163','qq','122','facebook','bytes'][random.randrange(6)]))
-    print(randomtimes('2023-2-26 06:00:00','2023-2-26 11:00:00',1))
-    # generator()
+    # print(randomtimes('2023-2-26 06:00:00','2023-2-26 11:00:00',1))
+    generator()

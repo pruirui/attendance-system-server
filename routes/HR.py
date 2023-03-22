@@ -47,7 +47,7 @@ def inviteUserJoinDepart():
         "msg":"邀请成功，请等待员工确认！"
     })
 
-@HR.route('/queryAllUsers',methods = ['POST'])
+@HR.route('/queryAllUsers',methods = ['POST'])  #暂未加入公司的人
 def queryAllUsers():
     datas = json.loads(request.data)
     print(datas)
@@ -71,7 +71,10 @@ def queryAllUsers():
 
     for it in res:
         if it['headshot'] is None or os.path.exists(it['headshot'] is False):
-            it['headshot'] = '/images/headshots/8888.jpg'
+            lee = random.randrange(1,300)
+            it['headshot'] = '/images/headshots/'+ str(lee) +'.jpg'
+        else:
+            it['headshot'] = it['headshot'][1:]
 
     return jsonify({
         "code":1,
@@ -127,7 +130,7 @@ def departmentClockData():
 def usersInDepartment():
     datas = json.loads(request.data)
     # departmentid = datas['departmentid']
-
+    print("datas",datas)
     pageIndex = (datas['pageIndex']) - 1
     # print(type(datas['pageIndex']))
     pageSize = datas['pageSize']
@@ -311,7 +314,7 @@ def createDepartment():
     data['rmb'] += '万'
     # data['workdays'] = int(data['workdays'])
     datalog = data
-    # datalog['description'] = '暂无描述'
+    datalog['description'] = '暂无描述'
     HR_addCreateDepartmentLog(datalog)
     workdays = data['workdays']
     dictDate = {"星期一":1,"星期二":2,"星期三":4,"星期四":8,"星期五":16,"星期六":32,"星期日":64}
