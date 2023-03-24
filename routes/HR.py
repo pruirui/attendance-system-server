@@ -6,8 +6,17 @@ import json,base64
 import datetime
 import os,random
 from face.face_recognition import getFaceEmbedding,detectFace
+from routes.shared import *
 import numpy as np
 HR = Blueprint('HR',__name__)
+
+# @HR.route('/queryDepartmentClock',methods = ['POST'])
+# def queryDepartmentClock():
+#     datas = json.loads(request.data)
+#     datas['querystring'] = "" 
+#     departusers = HR_FindAllUsersInDepartment(datas)
+#     for user in departusers:
+
 
 @HR.route('/dismissUserInDepart',methods = ['POST'])
 def dismissUserInDepart():

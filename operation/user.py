@@ -72,9 +72,11 @@ class User_operation():
     def _userClockData(self,datas):
         # data_list = User_clocks.query.filter_by(uid=uid,).all()
         print(type(datas['month']))
-        data_list_in = User_clocks.query.filter(User_clocks.note=='签到').filter(extract('month',User_clocks.clockTime) == datas['month']).\
+        data_list_in = User_clocks.query.filter(User_clocks.note=='签到').filter(\
+            and_(extract('month',User_clocks.clockTime) == datas['month'],extract('year',User_clocks.clockTime) == datas['year'])).\
             filter(User_clocks.uid==datas['uid']).all()
-        data_list_out = User_clocks.query.filter(User_clocks.note=='签退').filter(extract('month',User_clocks.clockTime) == datas['month']).\
+        data_list_out = User_clocks.query.filter(User_clocks.note=='签退').filter(\
+            and_(extract('month',User_clocks.clockTime) == datas['month'],extract('year',User_clocks.clockTime) == datas['year'])).\
             filter(User_clocks.uid==datas['uid']).all()
                     # filter(User_clocks.uid==datas['uid']).all()
         # print(type(data_list))
@@ -93,11 +95,11 @@ class User_operation():
         return data_list
     
     def _userLeave(self,datas):  #请假
-        data = Leaves.query.filter_by(uid=datas['uid'],state = '未审批').first()
+        data = Applications.query.filter_by(sender_id=datas['uid'],state = '未审批',event='员工请假').first()
         if data is not None:
             return data
-        new_data = Leaves(uid=datas['uid'],create_time=datas['create_time'],start_time=datas['start_time'],\
-                          end_time=datas['end_time'],state = '未审批')
+        new_data = Applications(sender_id=datas['uid'],create_time=datas['create_time'],content=datas['starttime']+datas['endtime'],\
+                          event=datas['event'],state = '未审批',department_id=datas['departmentid'])
         session.add(new_data)
         session.commit()
         # session.close()
@@ -123,6 +125,7 @@ class User_operation():
         data = Applications.query.filter_by(sender_id=datas['uid'],makeup_clock=datas['makeup_clock'],\
                             event=datas['event'],content=datas['content']).first()
         if data is not None:
+            print("!!!")
             return data
         
         new_data = Applications(sender_id=datas['uid'],create_time=datas['createtime'],makeup_clock=datas['makeup_clock'],\

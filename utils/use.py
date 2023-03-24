@@ -76,8 +76,12 @@
 #     outfile.write(json_str)
 
 
-import datetime
-data = {}
-data['date'] = "2023-1-1" + " 10:11:11"
-tmp = datetime.datetime.strptime(data['date'],'%Y-%m-%d %H:%M:%S')
-print(type(tmp),tmp)
+# import datetime
+# data = {}
+# data['date'] = "2023-1-1" + " 10:11:11"
+# tmp = datetime.datetime.strptime(data['date'],'%Y-%m-%d %H:%M:%S')
+# print(type(tmp),tmp)
+
+res = {'2023-03-01': None, '2023-03-02': None, '2023-03-03': None, '2023-03-04': None, '2023-03-05': None, '2023-03-06': None, '2023-03-07': None, '2023-03-08': None, '2023-03-09': None, '2023-03-10': None, '2023-03-11': None, '2023-03-12': None, '2023-03-16': None, '2023-03-17': None, '2023-03-18': None, '2023-03-19': None, '2023-03-23': None, '2023-03-13': '20:22:40', '2023-03-14': '15:12:16', '2023-03-15': '10:40:54', '2023-03-20': '15:38:50', '2023-03-21': '11:44:48', '2023-03-22': '09:15:04'}
+
+print(dict(sorted(res.items(), key=lambda x: x[0])))

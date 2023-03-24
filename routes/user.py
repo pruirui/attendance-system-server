@@ -7,6 +7,7 @@ user = Blueprint('user',__name__)
 
 from api.user import *
 from api.shared import *
+from routes.shared import *
 import datetime,os
 import base64
 from face.face_recognition import getFaceEmbedding,getdistance
@@ -374,16 +375,25 @@ def userApplyDepartment():
 def userMakeUpClock():
     # dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     data = json.loads(request.data)
+    print('data',data)
+    print(type(data['departmentid']))
     datetimeTmp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
     datetmp = datetime.datetime.strptime(data['date'],'%Y-%m-%d').strftime('%Y-%m-%d')
-    depart = user_QueryDepartment(data['uid'])[0]
+    # depart = user_QueryDepartment(data['uid'])[0]
     # print((datetmp))
     data['event'] = '员工申请补打卡'
     # if data['content'] == '签到':
     #     data['makeup_clock'] = datetmp + " " +depart['startTime']
     # else:
     #    
-    data['makeup_clock'] = datetmp 
+    if data['content'] == 0:
+        data['content'] = '签到'
+        print("签到")
+    else:
+        data['content'] = '签退'
+        print("签退")
+        
+    data['makeup_clock'] = data['date'] 
     data['createtime'] = datetimeTmp
     res = User_MakeUpClock(data)
     if res is not None:
@@ -418,11 +428,12 @@ def userWorkOverTime():
 
 @user.route('/userLeave',methods = ['GET','POST'])
 def userLeave():
-    uid = 1
+    # uid = 1
     datas = json.loads(request.data)
     dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     datas['create_time'] = dateTmp
-    datas['uid'] = uid
+    datas['event'] = '员工请假'
+    # datas['uid'] = uid
     res = User_Leave(datas)
     if res is not None:
         return jsonify({
@@ -483,91 +494,11 @@ def allUserClockData():
 @user.route('/userClockInfo',methods = ['POST']) #个人考勤信息页面
 def userClockInfo():
     datas = json.loads(request.data)
-    datas['month'] = '3'
+    print("datas",datas)
+    # datas['month'] = '3'
+    datas['year'] = int(datas['year'])
     resIn,resOut = User_ClockData(datas)  #签到签退数据
-    if resIn is None:
-        resInDate = []
-        resInTime = []
-    else:
-        resInDate = [it['clockTime'][:10] for it in resIn]
-        resInTime = [it['clockTime'] for it in resIn]
-    if resOut is None:
-        resOutDate = []
-        resOutTime = []
-    else:
-        resOutDate = [it['clockTime'][:10] for it in resOut]
-        resOutTime = [it['clockTime'] for it in resOut]  #具体时间
-
-    def date_range(start_date, end_date):
-        datelist = []
-        for n in range(int((end_date - start_date).days)+1):
-            datelist.append((start_date + datetime.timedelta(n)))
-        return datelist
-    res = {}
-    # datas['month'] = int(datas['month'])
-    datetmp = datetime.date.today()
-    datetmp = datetmp.strftime("%Y-%m-%d").split('-')
-    
-    dateend = calendar.monthrange(2023, int(datas['month']))[1]  
-    if int(datas['month']) == int(datetmp[1]):
-        dateend = int(datetmp[-1])
-    # print(datetmp[1],dateend)
-    start_date = datetime.datetime(2023, int(datas['month']), 1)  # 开始日期
-    end_date = datetime.datetime(2023, int(datas['month']), dateend) #结束时间
-    
-    depart_data = user_QueryDepartment(datas['uid']) #查询公司打卡时间设置
-    dateIn = depart_data[0]['startTime']
-    dateOut = depart_data[0]['endTime']
-    print("dateIn,dateOut",dateIn,dateOut)
-
-    allin,allout,late,advance= 0,0,0,0  #统计未打卡
-    for it in (date_range(start_date,end_date)):
-        if it.strftime("%Y-%m-%d") not in (resInDate):
-            allout += 1
-        if it.strftime("%Y-%m-%d") not in (resOutDate):
-            allout += 1
-
-    resInDate ,resOutDate= [],[]
-    for it in resIn:
-        if it['clockTime'][11:] < dateIn:
-            resInDate.append(it['clockTime'][:10])
-    for it in resOut:
-        if it['clockTime'][11:] > dateOut:
-            resOutDate.append(it['clockTime'][:10]) #统计正常打卡
-    print("resIn ,resOut",resIn ,resOut)
-    print("resInDate ,resOutDate",resInDate ,resOutDate)
-    # print(date_range(start_date,end_date))
-    for it in (date_range(start_date,end_date)):
-        if it.strftime("%Y-%m-%d") in (resInDate): 
-            allin += 1
-        if it.strftime("%Y-%m-%d") in (resOutDate):
-            allin += 1
-
-    for it in resInTime:
-        if it[11:] > dateIn:
-            late += 1
-    for it in resOutTime:
-        if it[11:] < dateOut: 
-            advance += 1
-    
-    clockTimeLine = {}
-    tmp = {}
-    for it in resIn:
-        tmp[it['clockTime'][:10]] = it['clockTime'][11:]
-    clockTimeLine['clockin'] = tmp
-    tmp = {}
-    for it in resOut:
-        tmp[it['clockTime'][:10]] = it['clockTime'][11:]
-    clockTimeLine['clockout'] = tmp
-    
-    res['zhexiantu'] = clockTimeLine
-    tmp = {}
-    tmp["daka"] = allin
-    tmp["weidaka"] = allout
-    tmp["zhidao"] = late
-    tmp["zaotui"] = advance
-    res['bing'] = tmp
-
+    res = processUserClockData(datas,resIn,resOut)
     return jsonify({
         "code":1,
         "data":res
@@ -576,6 +507,7 @@ def userClockInfo():
 @user.route('/userClockData',methods = ['GET','POST']) #每月打卡数据-日历显示（我的打卡）
 def userClockData():
     datas = json.loads(request.data)
+    datas['year'] = '2023'
     print('/userClockData',datas)
     resIn,resOut = User_ClockData(datas)
     if resIn is None:
@@ -607,7 +539,7 @@ def userClockData():
     # print(date_range(start_date,end_date))
     for it in (date_range(start_date,end_date)):
         if it.strftime("%Y-%m-%d") not in (resIn+resOut):
-            print(resIn,resOut)
+            # print(resIn,resOut)
             res[it.strftime("%Y-%m-%d")] = 3
         elif it.strftime("%Y-%m-%d") in (resIn) and it.strftime("%Y-%m-%d") in (resOut):
             res[it.strftime("%Y-%m-%d")] = 0
