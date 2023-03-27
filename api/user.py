@@ -169,7 +169,7 @@ def User_login(phone,pwd):
     data = query2dict(data)
     # print(name,pwd)
     print(data)
-    if data['password'] != pwd:
+    if data['password'] not in (pwd['password'],pwd['password1']):
         return "密码不正确",0
     #  else
     

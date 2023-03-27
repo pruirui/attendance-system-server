@@ -17,6 +17,98 @@ HR = Blueprint('HR',__name__)
 #     departusers = HR_FindAllUsersInDepartment(datas)
 #     for user in departusers:
 
+@HR.route('/allDepartmentsClockData',methods = ['POST'])
+def allDepartmentsClockData():
+    datas = json.loads(request.data)
+    print("datas",datas)
+    datas['year'] = int(datas['months'].split('-')[0])
+    datas['month'] = int(datas['months'].split('-')[1])
+    if 'userid' in datas.keys():
+        print("!!!")
+        datas['uid'] = datas['userid']
+      
+        # datas['month'] = '3'
+        resIn,resOut = User_ClockData(datas)  #签到签退数据
+        res = processUserClockData(datas,resIn,resOut)
+        return jsonify({
+            "code":1,
+            "data":res
+        })
+    else:
+        res = []
+        resAllDepartments = {"zhexiantu":{}}
+        chidaoSumAll,dakaSumAll,weidakaSumAll,zaotuiSumAll = 0,0,0,0,0
+        chidaoRateAll,dakaRateAll,weidakaRateAll,zaotuiRateAll = 0.0,0.0,0.0,0.0
+        for it in datas['departmentids']: # 遍历每个部门
+            datas['departmentid'] = it
+            datas['querystring'] = ''
+            res = HR_FindAllUsersInDepartment(datas)
+            if res is None:
+                continue
+            for ittt in res:  #去掉boss
+                if ittt['role'] == 'boss':
+                    res.remove(ittt)
+            
+            chidaoSum,dakaSum,weidakaSum,zaotuiSum,daysSum = 0,0,0,0,0
+            for itt in res:   #计算每个部门的数据
+                datas['uid'] = itt['id']
+                resIn,resOut = User_ClockData(datas)  #签到签退数据
+                userClockRes = processUserClockData(datas,resIn,resOut)
+                chidaoSum += userClockRes['bing']['chidao']
+                dakaSum += userClockRes['bing']['daka']
+                weidakaSum += userClockRes['bing']['weidaka']
+                zaotuiSum += userClockRes['bing']['zaotui']
+                chidaoSumAll += userClockRes['bing']['chidao']
+                dakaSumAll += userClockRes['bing']['daka']
+                weidakaSumAll += userClockRes['bing']['weidaka']
+                zaotuiSumAll += userClockRes['bing']['zaotui']
+            daysSum = len(userClockRes['zhexiantu']['clockin'][0]) * 2 * len(res)  #总天数
+            chidaoRate = "{:.2%}".format(round(chidaoSum / daysSum,4))
+            dakaRate = "{:.2%}".format(round(dakaSum / daysSum,4))
+            weidakaRate = "{:.2%}".format(round(weidakaSum / daysSum,4))
+            zaotuiRate = "{:.2%}".format(round(zaotuiSum / daysSum,4))
+            depart = {}
+            tmp = {}
+            tmp['chidaoRate'] = chidaoRate
+            tmp['dakaRate'] = dakaRate
+            tmp['weidakaRate'] = weidakaRate
+            tmp['zaotuiRate'] = zaotuiRate
+            chidaoRateAll += round(chidaoSum / daysSum,4)
+            dakaRateAll += round(dakaSum / daysSum,4)
+            weidakaRateAll += round(weidakaSum / daysSum,4)
+            zaotuiRateAll += round(zaotuiSum / daysSum,4)
+            depart[str(it)] = tmp
+            resAllDepartments['zhexiantu'][str(it)] = tmp   #每个部门的比率
+            print('type(resAllDepartment',type(resAllDepartments['zhexiantu'][str(it)]))
+        
+
+        chidaoRateAll = "{:.2%}".format(round(chidaoRateAll / len(datas['departmentids']),4))
+        dakaRateAll = "{:.2%}".format(round(dakaRateAll / len(datas['departmentids']),4))
+        weidakaRateAll = "{:.2%}".format(round(weidakaRateAll / len(datas['departmentids']),4))
+        zaotuiRateAll = "{:.2%}".format(round(zaotuiRateAll / len(datas['departmentids']),4))
+        tmp = {}
+        tmp["daka"] = dakaRate
+        tmp["weidaka"] = weidakaRate
+        tmp["chidao"] = chidaoRate
+        tmp["zaotui"] = zaotuiRate
+        tmp['xinzi'] = 0
+        tmp['jiaban'] = 0
+        tmp['qingjia'] = 0
+        resAllDepartments['kapian'] = tmp
+        tmp = {}
+        tmp["daka"] = dakaSumAll
+        tmp["weidaka"] = weidakaSumAll
+        tmp["chidao"] = chidaoSumAll
+        tmp["zaotui"] = zaotuiSumAll
+        tmp['jiaban'] = 0
+        tmp['qingjia'] = 0
+        resAllDepartments['bing'] = tmp
+        return jsonify({
+            "code":1,
+            "data":resAllDepartments
+        })
+        # 所有用户数据
+
 
 @HR.route('/dismissUserInDepart',methods = ['POST'])
 def dismissUserInDepart():
@@ -24,7 +116,7 @@ def dismissUserInDepart():
     print(datas)
     datetmp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     datas['createtime'] = datetmp
-    datas['event'] = 'hr辞退员工'
+    datas['event'] = '辞退员工'
     
     res = User_addInDepartmentLog(datas)
     if res:
@@ -43,7 +135,7 @@ def inviteUserJoinDepart():
     print(datas)
     datetmp = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     datas['createtime'] = datetmp
-    datas['event'] = 'hr邀请员工'
+    datas['event'] = '邀请员工'   #hr -> 
 
     res = User_addInDepartmentLog(datas)
     if res:
@@ -80,7 +172,9 @@ def queryAllUsers():
 
     for it in res:
         if it['headshot'] is None or os.path.exists(it['headshot'] is False):
-            lee = random.randrange(1,300)
+            # lee = random.randrange(1,300)
+            # it['headshot'] = '/images/headshots/'+ str(lee) +'.jpg'
+            lee = int(it['id']) % 300 + 1
             it['headshot'] = '/images/headshots/'+ str(lee) +'.jpg'
         else:
             it['headshot'] = it['headshot'][1:]
@@ -96,7 +190,7 @@ def grantUserHR():
     datas = json.loads(request.data)
     print(datas)
     datas['createTime'] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-    datas['event'] = 'hr授予用户权限'
+    datas['event'] = 'boss授予用户权限'
     datas['state'] = '已处理'
     HR_grantUserHR(datas)
     return jsonify({
@@ -135,6 +229,29 @@ def departmentClockData():
         "data":datas
     })
 
+@HR.route('/usersInDepartments',methods = ['POST'])   #查询boss所有部门员工
+def usersInDepartments():
+    datas = json.loads(request.data)
+    print("datas",datas)
+    datas['querystring'] = ''
+    res = []
+    for it in datas['departmentids']:
+        datas['departmentid'] = it
+        res += HR_FindAllUsersInDepartment(datas)
+    for it in res:
+        if it['role'] == 'boss':
+            res.remove(it)
+    if res is None:
+        return jsonify({
+            "code":1,
+            # "length":length,
+            "msg":"暂无员工"
+        })
+    return jsonify({
+        "code":1,
+        "data":res
+    })
+
 @HR.route('/usersInDepartment',methods = ['POST','GET']) 
 def usersInDepartment():
     datas = json.loads(request.data)
@@ -164,13 +281,13 @@ def usersInDepartment():
    
     for data in res:   # 拿用户头像
         # imgpath = data['headshot']
-        if data['headshot'] is not None:
-            imgpath = data['headshot']
-            with open(imgpath, 'rb') as f:
-                image_data = f.read()
-                encoded_image = base64.b64encode(image_data).decode('utf-8')
-                print(data)
-                data['headshot'] = encoded_image
+        if data['headshot'] is None or not os.path.exists(data['headshot']):
+            # lee = random.randrange(1,300)
+            # print("data['uid']",data['uid'])
+            lee = int(data['uid']) % 300 + 1
+            data['headshot'] = '/images/headshots/'+ str(lee) +'.jpg'
+        else:
+            data['headshot'] = data['headshot'][1:]
     # length = len(data)
     return jsonify({
         "code":1,
@@ -306,7 +423,7 @@ def createDepartment():
         data['createTime'] = datetime.datetime.strptime(data['createTime'], '%Y-%m-%d')
 
     data['state'] = '待审批'
-    data['event'] = 'hr创建公司'
+    data['event'] = 'boss创建公司'  # hr->boss
     data['process_id'] = 0
     departid = random.randrange(100000,999999)
     print(departid)

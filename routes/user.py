@@ -1,6 +1,7 @@
 
 import calendar
 from collections import defaultdict
+import hashlib
 import random
 from flask import Blueprint,request,jsonify
 user = Blueprint('user',__name__)
@@ -66,7 +67,7 @@ def processMyApplications():
             "code":1,
             "msg":"您已"+ datas['status'] +"该员工加入公司！"
         })
-    elif res['event'] == 'hr邀请员工':
+    elif res['event'] == '邀请员工':
         datas['status'] = datas['state']
         datas['event'] = res['event']
         user_enterDepartmentNormal(datas)
@@ -75,7 +76,7 @@ def processMyApplications():
             "msg":"您已"+ datas['status'] +"加入该公司！"
         })
 
-    elif res['event'] == 'hr辞退员工':
+    elif res['event'] == '辞退员工':
         print(datas)
         datas['status'] = datas['state']
         datas['event'] = res['event']
@@ -84,7 +85,7 @@ def processMyApplications():
             "code":1,
             "msg":"您已"+ datas['status'] +"辞退该公司！"
         })
-    elif res['event'] == 'hr创建公司':
+    elif res['event'] == 'boss创建公司':
         datas['status'] = datas['state'] 
         datas['event'] = res['event']   
         datas['uid'] = res['sender_id']
@@ -122,7 +123,7 @@ def queryMyApplications():
     else:
         # print(depart)
         for it in depart:
-            if it['role'] == 'hr':
+            if it['role'] == 'boss':
                 idlist.append(it['departmentid'])
         # idlist = [it['departmentid'] for it in dapart if it['role'] == 'hr']
         # print("idlist",type(idlist[0]))
@@ -437,7 +438,7 @@ def userLeave():
     res = User_Leave(datas)
     if res is not None:
         return jsonify({
-            "code":1,
+            "code":-1,
             "msg":"申请已提交，请勿重复提交！"
         })
     return jsonify({
@@ -756,7 +757,11 @@ def login():
     # })
     data = json.loads(request.data)
     phone = data['phone']
-    pwd = data['password']
+    pwd = {}
+    pwd['password'] = data['password']
+    md5 = hashlib.md5()
+    md5.update(data["password"].encode('utf-8'))
+    pwd["password1"] = md5.hexdigest()
     data,flag = User_login(phone,pwd)
     # data = jsonify(data)
     if flag:
@@ -803,6 +808,10 @@ def reg():
     data = json.loads(request.data)
 
     #判断用户是否存在
+    md5 = hashlib.md5()
+    md5.update(data["password"].encode('utf-8'))
+    data["password"] = md5.hexdigest()
+    print('data["password"]',data["password"])
     cnt = User_isExisted(data['phone'])
     print(type(cnt))
     if cnt:

@@ -6,7 +6,7 @@ from db_config import db_init as db
 class Shared_operation():
 
     def _addInDepartmentLog(self,datas): #填入申请记录
-        if datas['event'] == 'hr辞退员工':
+        if datas['event'] == '辞退员工':
             print("!!!")
             data = Applications.query.filter_by(state="待审批",sender_id=datas['HRuid'],process_id=datas['uid'],department_id=datas['departmentid'],event=datas['event']).first()
             if data is not None:
@@ -15,7 +15,7 @@ class Shared_operation():
                             event=datas['event'],description='暂无描述',state="待审批")
             session.add(new_data)
             session.commit()
-        elif datas['event'] == 'hr邀请员工':
+        elif datas['event'] == '邀请员工':
             print("!!!")
             data = Applications.query.filter_by(state="待审批",sender_id=datas['HRuid'],process_id=datas['uid'],department_id=datas['departmentid'],event=datas['event']).first()
             if data is not None:

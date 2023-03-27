@@ -209,18 +209,22 @@ class User_operation():
                 session.add(new_data)
                 session.commit()
 
-        elif datas['event'] == 'hr创建公司':
+        elif datas['event'] == 'boss创建公司':    # hr -> boss
             apply = Applications.query.filter_by(id=datas['id']).first()
             apply.apply_time = datas['apply_time']
             apply.state =datas['status']
             db.session.commit()
             if datas['status'] == '接受':
-                new_data = User_departments(uid=datas['HRuid'],departmentid=datas['departmentid'],role='hr',\
+                new_data = User_departments(uid=datas['uid'],departmentid=datas['departmentid'],role='boss',\
                                             indate=datas['apply_time'][:10],state='在职')
                 session.add(new_data)
                 session.commit()
+
+                data = HR_Department.query.fiter_by(departmentid=datas['departmentid']).first()
+                data.state = '已注册'
+                db.session.commit()
         
-        elif datas['event'] == 'hr辞退员工':
+        elif datas['event'] == '辞退员工':
             apply = Applications.query.filter_by(id=datas['id']).first()
             apply.apply_time = datas['apply_time']
             apply.state =datas['status']
@@ -232,7 +236,7 @@ class User_operation():
             else:
                 return
             
-        elif datas['event'] == 'hr邀请员工':
+        elif datas['event'] == '邀请员工':
             apply = Applications.query.filter_by(id=datas['id']).first()
             apply.apply_time = datas['apply_time']
             apply.state =datas['status']
