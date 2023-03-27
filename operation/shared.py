@@ -45,6 +45,7 @@ class Shared_operation():
                             event=datas['event'],description=datas['description'],state="待审批")
         session.add(new_data)
         session.commit()
+    
 
     def _addDeleteDepartmentLog(self,datas):
         data = Applications.query.filter_by(sender_id=datas['uid'],\

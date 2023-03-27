@@ -413,7 +413,7 @@ def userWorkOverTime():
     data = json.loads(request.data)
     datetimeTmp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
     data['uid'] = uid
-    data['event'] = '员工申请补加班'
+    data['event'] = '员工申请加班'
     data['createtime'] = datetimeTmp
 
     res = User_WorkOverTime(data)
@@ -505,6 +505,31 @@ def userClockInfo():
         "data":res
     })
 
+@user.route('/userClockDayData',methods = ['POST'])
+def userClockDayData():
+    datas = json.loads(request.data)
+    datetmp = datetime.date.today().strftime("%Y-%m-%d")
+    datas['day'] = datetmp.split('-')[-1]
+    datas['month'] = datetmp.split('-')[1]
+    clockIn,clockOut = User_ClockDayData(datas)
+    if clockIn is None:
+        clockIn = 0
+    else:
+        clockIn = 1 
+
+    if clockOut is None:
+        clockOut = 0
+    else:
+        clockOut = 1    
+    
+    return jsonify({
+        "code":1,
+        "data":{
+            "clockIn":clockIn,
+            "clockOut":clockOut,
+        }
+    })
+
 @user.route('/userClockData',methods = ['GET','POST']) #每月打卡数据-日历显示（我的打卡）
 def userClockData():
     datas = json.loads(request.data)
@@ -559,8 +584,8 @@ def userClockData():
         "data":res
     })
 
-@user.route('/clockOut',methods = ['GET','POST'])
-def clockOut():
+@user.route('/handClockOut',methods = ['GET','POST'])
+def handClockOut():
     data = json.loads(request.data)
     uid = data['uid']
     dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -568,25 +593,151 @@ def clockOut():
     if data is not None:
         return jsonify({
             "code":-1,
-            "msg":"今日已打卡，请勿重复打卡！"
+            "msg":"今日已签退，请勿重复打卡！"
         })
-    depart_data = user_QueryDepartment(uid) #用户角色
+    depart_data = user_QueryDepartment(uid) #用户部门
     # datefront = datetime.time(21,0,0).strftime('%H:%M:%S')
     # dateend = datetime.time(23,0,0).strftime('%H:%M:%S')
     dateend = depart_data[0]['endTime']
+    User_clock(uid,dateTmp,"签退")
     if dateTmp[11:] > dateend:
-        User_clock(uid,dateTmp,"签退")
+        
         return jsonify({
                 "code":1,
                 "msg":"恭喜你,打卡成功!!!"
             })
     else:
         return jsonify({
-                "code":1,
+                "code":0,
                 "msg":"打卡成功，您已早退！"
             })
-    
+
+@user.route('/handClockIn',methods = ['POST'])
+def handclockIn():
+    data = json.loads(request.data)
+    uid = data['uid']
+    print(uid)
+    dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    data = User_queryClockBy(uid,dateTmp[:11],"签到")
+    if data is not None:
+        return jsonify({
+            "code":-1,
+            "msg":"今日已签到，请勿重复打卡！"
+        })
+    depart_data = user_QueryDepartment(uid) #用户部门
+    # datefront = datetime.time(21,0,0).strftime('%H:%M:%S')
+    # dateend = datetime.time(23,0,0).strftime('%H:%M:%S')
+    datestart = depart_data[0]['startTime']
+    User_clock(uid,dateTmp,"签到")
+    if dateTmp[11:] < datestart:
+       
+        return jsonify({
+                "code":1,
+                "msg":"恭喜你,打卡成功!!!"
+            })
+    else:
+        return jsonify({
+                "code":0,
+                "msg":"打卡成功，您已迟到！"
+            })    
+      
 import numpy as np
+
+@user.route('/clockOut',methods = ['GET','POST'])
+def clockOut():
+    # username = "lee"
+    # uid = 9
+    temp = 8888
+    # if request.files.get('file') is None:
+    #     return jsonify({
+    #         "msg":"请选择图片！"
+    #     })
+    # data = json.loads(request.data)
+    # print(type(data['file']))
+    userclockimg = request.files.get('file')
+    print(type(userclockimg))
+    # filename = userclockimg.filename
+    filename = userclockimg.filename
+    print(filename)
+    print((filename.split('.')))
+    path = './images/temp/' + str(temp) + '.' +  filename.split('.')[-1]
+    userclockimg.save(path)
+    # userclockimg = np.array(userclockimg)
+    # print(len(userclockimg))
+    # img = request.files.get('file')
+    # userimgpath = './images/userfaces' + str(uid)
+    res = user_QueryEmbedding()
+    userclockimg = np.array(getFaceEmbedding(path))
+    for data in res:
+        if data['faceEmbedding'] is None:
+            continue
+        # print(data['faceEmbedding'])
+        userfacembedding = np.frombuffer(data['faceEmbedding']).reshape(512)
+        # cos_sim = np.dot(userclockimg,userfacembedding) / (np.linalg.norm(userclockimg) * np.linalg.norm(userfacembedding))
+        distance = getdistance(userclockimg,userfacembedding)
+        print("userface",type(userfacembedding[0]))
+        print(distance)
+        #匹配人脸
+        if  distance:
+           
+            #查询用户个人信息
+            uid = data['id']
+            print(uid)
+            user_data = User_BaseData(uid) #用户个人信息
+            depart_data = user_QueryDepartment(uid) #用户角色
+            print(depart_data)
+            if depart_data is None:
+                user_data['role'] = "newer"
+            else:
+                user_data['role'] = depart_data[0]['role']
+                
+            # data['birthday'] = data['birthday'].strftime('%Y-%m-%d')
+            imgpath = user_data['headshot']
+            if imgpath == None:
+                data['headshot'] = "未上传图片"
+            else:
+                with open(imgpath, 'rb') as f:
+                    image_data = f.read()
+                    encoded_image = base64.b64encode(image_data).decode('utf-8')
+                print(data)
+                user_data['headshot'] = encoded_image
+
+            dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+            data = User_queryClockBy(uid,dateTmp[:11],"签退")
+            if data is not None:
+                return jsonify({
+                    "code":-1,
+                    "msg":"今日已签退，请勿重复打卡！",
+                    "data":user_data
+                })
+            print(dateTmp[11:])
+            # datefront = datetime.time(6,0,0).strftime('%H:%M:%S')
+            datefront = depart_data[0]['startTime']
+            # dateend = datetime.time(12,0,0).strftime('%H:%M:%S')
+            dateend = depart_data[0]['endTime']
+            if(dateTmp[11:] > datefront):
+                print("ok")
+            print(type('!!!'))
+            User_clock(uid,dateTmp,"签退")
+            if dateTmp[11:] > dateend :
+                return jsonify({
+                        "code":1,
+                        "msg":"恭喜你,打卡成功!!!",
+                        "data":user_data
+                    })
+            else:
+                return jsonify({
+                        "code":0,
+                        "msg":"您已早退 !",
+                        "data":user_data
+                    })
+    #不符合人脸数据库
+    return jsonify({
+                "code":-1,
+                "msg":"人脸检测失败或数据库无您人脸数据，请联系HR录入人脸！"
+            })
+        
+
 @user.route('/clockIn',methods = ['GET','POST'])
 def clockIn():
     # username = "lee"
@@ -666,12 +817,14 @@ def clockIn():
             if dateTmp[11:] < datefront :
                 return jsonify({
                         "code":1,
-                        "msg":"恭喜你,打卡成功!!!"
+                        "msg":"恭喜你,打卡成功!!!",
+                        "data":user_data
                     })
             else:
                 return jsonify({
-                        "code":-1,
-                        "msg":"您已迟到!"
+                        "code":0,
+                        "msg":"您已迟到 !",
+                        "data":user_data
                     })
     #不符合人脸数据库
     return jsonify({

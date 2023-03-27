@@ -34,7 +34,7 @@ threshold = 0.60#0.68
 def getdistance(img1_representation,img2_representation):
     distance = dst.findCosineDistance(img1_representation, img2_representation)
     print(distance)
-    return distance < 0.65
+    return distance < 0.50
 # model = DeepFace.build_model(model_name)
 # print(model.summary())
 if __name__ == '__main__':

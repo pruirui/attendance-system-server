@@ -23,7 +23,7 @@ def allDepartmentsClockData():
     print("datas",datas)
     datas['year'] = int(datas['months'].split('-')[0])
     datas['month'] = int(datas['months'].split('-')[1])
-    if 'userid' in datas.keys():
+    if 'userid' in datas.keys() and datas['userid'] != '':
         print("!!!")
         datas['uid'] = datas['userid']
       
@@ -37,7 +37,7 @@ def allDepartmentsClockData():
     else:
         res = []
         resAllDepartments = {"zhexiantu":{}}
-        chidaoSumAll,dakaSumAll,weidakaSumAll,zaotuiSumAll = 0,0,0,0,0
+        chidaoSumAll,dakaSumAll,weidakaSumAll,zaotuiSumAll,wagesAll,makeUpAll,workOverAll = 0,0,0,0,0,0,0
         chidaoRateAll,dakaRateAll,weidakaRateAll,zaotuiRateAll = 0.0,0.0,0.0,0.0
         for it in datas['departmentids']: # 遍历每个部门
             datas['departmentid'] = it
@@ -62,11 +62,17 @@ def allDepartmentsClockData():
                 dakaSumAll += userClockRes['bing']['daka']
                 weidakaSumAll += userClockRes['bing']['weidaka']
                 zaotuiSumAll += userClockRes['bing']['zaotui']
+                makeUpAll += userClockRes['bing']['qingjia']
+                workOverAll += userClockRes['bing']['jiaban']
+                wagesAll += userClockRes['bing']['xinzi']
+            print("len(userClockRes['zhexiantu']['clockin'][0])",len(userClockRes['zhexiantu']['clockin'][0]))
+            if(len(res) == 0):
+                continue
             daysSum = len(userClockRes['zhexiantu']['clockin'][0]) * 2 * len(res)  #总天数
-            chidaoRate = "{:.2%}".format(round(chidaoSum / daysSum,4))
-            dakaRate = "{:.2%}".format(round(dakaSum / daysSum,4))
-            weidakaRate = "{:.2%}".format(round(weidakaSum / daysSum,4))
-            zaotuiRate = "{:.2%}".format(round(zaotuiSum / daysSum,4))
+            chidaoRate = (round(chidaoSum / daysSum * 100,2))
+            dakaRate = (round(dakaSum / daysSum * 100,2))
+            weidakaRate = (round(weidakaSum / daysSum * 100,2))
+            zaotuiRate = (round(zaotuiSum / daysSum * 100,2))
             depart = {}
             tmp = {}
             tmp['chidaoRate'] = chidaoRate
@@ -87,10 +93,10 @@ def allDepartmentsClockData():
         weidakaRateAll = "{:.2%}".format(round(weidakaRateAll / len(datas['departmentids']),4))
         zaotuiRateAll = "{:.2%}".format(round(zaotuiRateAll / len(datas['departmentids']),4))
         tmp = {}
-        tmp["daka"] = dakaRate
-        tmp["weidaka"] = weidakaRate
-        tmp["chidao"] = chidaoRate
-        tmp["zaotui"] = zaotuiRate
+        tmp["daka"] = dakaRateAll
+        tmp["weidaka"] = weidakaRateAll
+        tmp["chidao"] = chidaoRateAll
+        tmp["zaotui"] = zaotuiRateAll
         tmp['xinzi'] = 0
         tmp['jiaban'] = 0
         tmp['qingjia'] = 0
@@ -278,13 +284,13 @@ def usersInDepartment():
         last = len(res)
     res = res[pageSize*pageIndex:last]
 
-   
+    print("res",res)
     for data in res:   # 拿用户头像
         # imgpath = data['headshot']
         if data['headshot'] is None or not os.path.exists(data['headshot']):
             # lee = random.randrange(1,300)
             # print("data['uid']",data['uid'])
-            lee = int(data['uid']) % 300 + 1
+            lee = int(data['id']) % 300 + 1
             data['headshot'] = '/images/headshots/'+ str(lee) +'.jpg'
         else:
             data['headshot'] = data['headshot'][1:]

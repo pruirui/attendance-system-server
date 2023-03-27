@@ -87,18 +87,24 @@ def generator():
                 passwd="liyuanhang",
                 database = "clock"
             )
-        print("okok")
+        # print("okok")
         if conn.is_connected():
             cursor = conn.cursor()
             row = {}
             n = 0
             sdatetmp = ['6:00:00','7:00:00','8:00:00','9:00:00','10:00:00','11:00:00']
             edatetmp = ['16:00:00','17:00:00','18:00:00','19:00:00','20:00:00','21:00:00','22:00:00','23:00:00']
-            for i in range(50):
+
+            cursor.execute(' \
+                    SELECT departmentid FROM `departments`')
+            # print(type(res))
+            departments = cursor.fetchall()
+            # print((res[0][0]))
+            for i in range(1):
                 n += 1
               
                 # departments
-                departmentname = fake.company()
+                departmentname = fake.company()[:-4] + "团队"
                 uid = random.randrange(100000,999999)  
                 departmentid = random.randrange(10000000,99999999)
                 create_time = randomtimes('2015-11-01 07:00:00','2023-3-25 09:00:00',1)
@@ -131,7 +137,7 @@ def generator():
                 email = fake.email().replace('example',['google','163','qq','122','facebook','bytes'][random.randrange(6)])
                 
                 # user_departments
-                role = 'hr'
+                role = 'user'
                 indate = create_time[:10]
                 state = '在职'
 
@@ -151,11 +157,43 @@ def generator():
                 #     VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s","%s", "%s", "%s","%s", "%s", "%s", "%s","%s"); \
                 #     ' % (departmentid,uid,create_time,stat,descri,departmentname,hourpay,workOverPay,workOverLimit,\
                 #          startTime,endTime,workdays,phone,address,rmb))
-                # cursor.execute(' \
-                #     INSERT INTO `user_departments` (uid,departmentid,role,indate,state)\
-                #     VALUES (%s, %s, "%s", "%s", "%s"); \
-                #     ' % (uid,departmentid,role,indate,state))
+                departmentid = 191406
+                cursor.execute(' \
+                    INSERT INTO `user_departments` (uid,departmentid,role,indate,state)\
+                    VALUES (%s, %s, "%s", "%s", "%s"); \
+                    ' % (uid,departmentid,role,indate,state))
                 
+               
+                        
+                def date_range(start_date, end_date):
+                    datelist = []
+                    for n in range(int((end_date - start_date).days)+1):
+                        datelist.append((start_date + datetime.timedelta(n)))
+                    return datelist
+                start_date = datetime.datetime(2023, 1, 1)  # 开始日期
+                end_date = datetime.datetime(2023, 3, 26) #结束时间
+                for lee in (date_range(start_date,end_date)):#每个员工1月起打卡记录
+                    # for x in range(2):
+                    startIn = lee.strftime("%Y-%m-%d")+ " " + "07:00:00"
+                    endIn = lee.strftime("%Y-%m-%d")+ " " + "11:00:00"
+                    startOut = lee.strftime("%Y-%m-%d")+ " " + "15:00:00"
+                    endOut = lee.strftime("%Y-%m-%d")+ " " + "23:59:59"
+                    clockInTime = randomtimes(startIn,endIn,1)
+                    clockOutTime = randomtimes(startOut,endOut,1)
+                    # print(clockTime)
+                    tmp = random.randrange(100)
+                    if tmp >= 10:
+                        cursor.execute(' \
+                            INSERT INTO `user_clocks` (uid,clockTime,note)\
+                            VALUES ( %s, "%s", "%s"); \
+                            ' % (uid,clockInTime,'签到'))
+                    
+                    tmp = random.randrange(100)
+                    if tmp >= 10:
+                        cursor.execute(' \
+                            INSERT INTO `user_clocks` (uid,clockTime,note)\
+                            VALUES ( %s, "%s", "%s"); \
+                            ' % (uid,clockOutTime,'签退'))
                 #user_others
                 # for lee in range(30):  # 每个部门30个员工
                 #     uid = random.randrange(100000,999999) 
@@ -204,4 +242,8 @@ if __name__ == '__main__' :
     # # print(random.randrange(1,5))
     # print(fake.email().replace('example',['google','163','qq','122','facebook','bytes'][random.randrange(6)]))
     # print(randomtimes('2023-2-26 06:00:00','2023-2-26 11:00:00',1))
+    # print(fake.company()[:-4] + "团队")
     generator()
+    
+    
+   

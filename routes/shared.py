@@ -36,6 +36,21 @@ def processUserClockData(datas,resIn,resOut):
     end_date = datetime.datetime(datas['year'], int(datas['month']), dateend) #结束时间
     
     depart_data = user_QueryDepartment(datas['uid']) #查询公司打卡时间设置
+    print("datas['uid']",datas['uid'])
+    ttt = depart_data[0]['endTime'].split(':')
+    print("ttt",ttt)
+    wages = float(ttt[0]) + (0.5 if ttt[1] == '30' else 0.0) 
+    print("wage",wages)
+    ttt = depart_data[0]['startTime'].split(':')
+    wages -= float(ttt[0]) + (0.5 if ttt[1] == '30' else 0.0) 
+    print("wage",wages)
+    wages *= float(depart_data[0]['hourPay'])
+    print("wage",wages)
+    makeUp,workOver = User_queryOtherDatasLog(datas)
+    if makeUp is None:
+        makeUp = []
+    if workOver is None:
+        workOver = []    
     dateIn = depart_data[0]['startTime']
     dateOut = depart_data[0]['endTime']
     print("dateIn,dateOut",dateIn,dateOut)
@@ -100,9 +115,9 @@ def processUserClockData(datas,resIn,resOut):
     tmp["weidaka"] = allout
     tmp["chidao"] = late
     tmp["zaotui"] = advance
-    tmp['xinzi'] = 0
-    tmp['jiaban'] = 0
-    tmp['qingjia'] = 0
+    tmp['xinzi'] = wages
+    tmp['jiaban'] = len(makeUp)
+    tmp['qingjia'] = len(workOver)
     res['bing'] = tmp
 
 

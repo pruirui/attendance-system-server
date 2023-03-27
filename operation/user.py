@@ -69,6 +69,26 @@ class User_operation():
         session.commit()
         # session.close()
     
+    def _userClockDayData(self,datas):
+        clockin = User_clocks.query.filter(User_clocks.note=='签到').filter(\
+            and_(extract('month',User_clocks.clockTime) == datas['month'],extract('day',User_clocks.clockTime) == datas['day'])).\
+            filter(User_clocks.uid==datas['uid']).first()
+        clockout = User_clocks.query.filter(User_clocks.note=='签退').filter(\
+            and_(extract('month',User_clocks.clockTime) == datas['month'],extract('day',User_clocks.clockTime) == datas['day'])).\
+            filter(User_clocks.uid==datas['uid']).first()
+        
+        return clockin,clockout
+    
+    def _queryOtherDatasLog(self,datas):
+        makeUp = Applications.query.filter(Applications.event=='员工申请请假').filter(Applications.state=='接受').filter(\
+            and_(extract('month',Applications.create_time) == datas['month'],extract('year',Applications.create_time) == datas['year'])).\
+            filter(Applications.sender_id==datas['uid']).all()
+        workOver =  Applications.query.filter(Applications.event=='员工申请加班').filter(Applications.state=='接受').filter(\
+            and_(extract('month',Applications.create_time) == datas['month'],extract('year',Applications.create_time) == datas['year'])).\
+            filter(Applications.sender_id==datas['uid']).all()
+        
+        return makeUp,workOver
+        
     def _userClockData(self,datas):
         # data_list = User_clocks.query.filter_by(uid=uid,).all()
         print(type(datas['month']))

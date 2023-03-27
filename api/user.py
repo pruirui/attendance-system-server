@@ -114,6 +114,24 @@ def Alluser_ClockData():
     data = query2dict(data)
     return data
 
+def User_ClockDayData(datas):
+    u_o = User_operation()
+    data1,data2 = u_o._userClockDayData(datas)
+    if data1 is not None:
+        data1 = query2dict(data1)
+    if data2 is not None:
+        data2 = query2dict(data2)
+    return data1,data2
+
+def User_queryOtherDatasLog(datas):
+    u_o = User_operation()
+    data1,data2 = u_o._queryOtherDatasLog(datas)
+    if data1 is not None:
+        data1 = query2dict(data1)
+    if data2 is not None:
+        data2 = query2dict(data2)
+    return data1,data2
+
 def User_ClockData(datas):
     u_o = User_operation()
     data1,data2 = u_o._userClockData(datas)
