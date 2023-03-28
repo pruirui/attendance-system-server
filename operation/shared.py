@@ -36,7 +36,7 @@ class Shared_operation():
         return data
 
     def _queryCreateLog(self,datas):
-        data = db.session.query(Applications).filter(Applications.sender_id==datas['uid'],Applications.event.like("%" + "公司" +"%"),\
+        data = db.session.query(Applications.id,Applications.event).filter(Applications.sender_id==datas['uid'],Applications.event.like("%" + "团队" +"%"),\
                                        Applications.state=='待审批').all()
         return data
     
@@ -48,11 +48,11 @@ class Shared_operation():
     
 
     def _addDeleteDepartmentLog(self,datas):
-        data = Applications.query.filter_by(sender_id=datas['uid'],\
+        data = Applications.query.filter_by(sender_id=datas['uid'],state='待审批',\
                                 department_id=datas['departmentid'],event=datas['event']).first()
         if data is not None:
             return data
-        new_data = Applications(create_time=datas['createTime'],sender_id=datas['uid'],\
+        new_data = Applications(create_time=datas['createTime'],sender_id=datas['uid'],process_id=0,\
                                 department_id=datas['departmentid'],event=datas['event'],state=datas['state'])
         session.add(new_data)
         session.commit()

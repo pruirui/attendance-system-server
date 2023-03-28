@@ -2,6 +2,36 @@ from operation.user import User_operation
 from utils.data_process import Class_To_Data,query2dict,time2string
 # from db_config import session
 
+def User_addTodoLists(datas):
+    u_o = User_operation()
+    data = u_o._addUserTodoLists(datas)
+    if data is not None:
+        data = query2dict(data)
+    return data
+
+def User_updateTodoLists(datas):
+    u_o = User_operation()
+    data = u_o._updateUserTodoLists(datas)
+    if data is not None:
+        data = query2dict(data)
+    return data
+
+def User_queryTodoLists(datas):
+    u_o = User_operation()
+    data = u_o._queryUserTodoLists(datas)
+    if data is not None:
+        data = query2dict(data)
+    return data
+
+def User_queryFirstPage(datas):
+    u_o = User_operation()
+    data1,data2 = u_o._queryFirstPage(datas)
+    if data1 is not None:
+        data1 = query2dict(data1)
+    if data2 is not None:
+        data2 = query2dict(data2)
+    return data1,data2
+   
 def User_updatePassword(datas):
     u_o = User_operation()
     res = u_o._updatePassword(datas)

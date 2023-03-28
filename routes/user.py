@@ -13,6 +13,68 @@ import datetime,os
 import base64
 from face.face_recognition import getFaceEmbedding,getdistance
 
+@user.route('/addTodoLists',methods = ['POST'])
+def addTodoLists():
+    datas = json.loads(request.data)
+    datetmp = datetime.date.today().strftime("%Y-%m-%d")
+    datas['createTime'] = datetmp
+    res = User_addTodoLists(datas)
+    return jsonify({
+        "code":1,
+        "msg":"恭喜你，添加成功！"
+    })
+
+@user.route('/updateTodoLists',methods = ['POST'])
+def updateTodoLists():
+    datas = json.loads(request.data)
+    print("datas",datas)
+    res = User_updateTodoLists(datas)
+    return jsonify({
+        "code":1,
+        "msg":"恭喜你，修改成功！"
+    })
+
+@user.route('/userTodoLists',methods = ['POST'])
+def userTodoLists():
+    datas = json.loads(request.data)
+    print("datas",datas)
+    datetmp = datetime.date.today().strftime("%Y-%m-%d")
+    datas['year'] = datetmp.split('-')[0]
+    datas['month'] = datetmp.split('-')[1]
+    datas['day'] = datetmp.split('-')[2]
+    res = User_queryTodoLists(datas)
+    return jsonify({
+        "code":1,
+        "data":res
+    })
+
+@user.route('/firstPage',methods = ['POST'])
+def firstPage():
+    data = json.loads(request.data)
+    res1,res2 = User_queryFirstPage(data)
+    if res2 is None:
+        res2 = 0
+    else :
+        res2 = len(res2)
+    if res1 is None:
+        datein = 0
+        tmp = 0
+    else:
+        datein = res1['indate']
+        date1 = datetime.datetime.strptime(datein, "%Y-%m-%d")
+        print(type(date1))
+        date2 = datetime.datetime.now().strftime("%Y-%m-%d")
+        date2 = datetime.datetime.strptime(date2, "%Y-%m-%d")
+        datein = (date2 - date1).days
+        tmp = datein * 2 - (res2)
+    return jsonify({
+        "code":1,
+        "data":{
+            "indate":datein,
+            "clock":(res2),
+            "noclock":tmp
+        }
+    })
 
 
 @user.route('/manualClockIn',methods = ['POST'])
@@ -57,7 +119,7 @@ def processMyApplications():
             "code":-1,
             "msg":"输入处理事项类型！"
         })
-    elif res['event'] == '员工申请加入公司':
+    elif res['event'] == '员工申请加入团队':
         datas['event'] = res['event']
         datas['status'] = datas['state']
         datas['HRuid'] = datas['uid']
@@ -65,7 +127,7 @@ def processMyApplications():
         user_enterDepartmentNormal(datas)   
         return jsonify({
             "code":1,
-            "msg":"您已"+ datas['status'] +"该员工加入公司！"
+            "msg":"您已"+ datas['status'] +"该员工加入团队！"
         })
     elif res['event'] == '邀请员工':
         datas['status'] = datas['state']
@@ -73,7 +135,7 @@ def processMyApplications():
         user_enterDepartmentNormal(datas)
         return jsonify({
             "code":1,
-            "msg":"您已"+ datas['status'] +"加入该公司！"
+            "msg":"您已"+ datas['status'] +"加入该团队！"
         })
 
     elif res['event'] == '辞退员工':
@@ -83,30 +145,60 @@ def processMyApplications():
         user_enterDepartmentNormal(datas)
         return jsonify({
             "code":1,
-            "msg":"您已"+ datas['status'] +"辞退该公司！"
+            "msg":"您已"+ datas['status'] +"退出该团队！"
         })
-    elif res['event'] == 'boss创建公司':
+    elif res['event'] == 'boss创建团队':
         datas['status'] = datas['state'] 
         datas['event'] = res['event']   
         datas['uid'] = res['sender_id']
         user_enterDepartmentNormal(datas)
         return jsonify({
             "code":1,
-            "msg":"管理员已"+ datas['status'] +"创建公司！"
+            "msg":"管理员已"+ datas['status'] +"创建团队！"
         })
     elif res['event'] == '员工申请补打卡':
+        datas['hruid'] = datas['uid']
         datas['uid'] = res['sender_id']
         datas['event'] = res['event']
         datas['status'] = datas['state'] 
-        depart = user_QueryDepartmentDetail(res['departmentid'])[0]
+        datas['content'] = res['content']
+        depart = user_QueryDepartmentDetail(datas)[0]
         if res['content'] == '签到':
-            datas['date'] =datas['date'] + " " + depart['startTime']  
+            datas['date'] =res['makeup_clock'] + " " + depart['startTime']  
         else :
-            datas['date'] =datas['date'] + " " + depart['endTime']  
+            datas['date'] =res['makeup_clock'] + " " + depart['endTime']  
         user_enterDepartmentNormal(datas)
         return jsonify({
             "code":1,
-            "msg":"HR已"+ datas['status'] +"申请补打卡！"
+            "msg":"您已"+ datas['status'] +"申请补打卡！"
+        })
+    elif res['event'] == '员工申请请假':
+        # datas['uid'] = res['sender_id']
+        datas['event'] = res['event']
+        datas['status'] = datas['state'] 
+        user_enterDepartmentNormal(datas)
+        return jsonify({
+            "code":1,
+            "msg":"您已"+ datas['status'] +"申请请假！"
+        })
+    
+    elif res['event'] == '员工申请加班':
+        # datas['uid'] = res['sender_id']
+        datas['event'] = res['event']
+        datas['status'] = datas['state'] 
+        user_enterDepartmentNormal(datas)
+        return jsonify({
+            "code":1,
+            "msg":"您已"+ datas['status'] +"申请加班！"
+        })
+    elif res['event'] == 'hr删除团队':
+        # datas['uid'] = res['sender_id']
+        datas['event'] = res['event']
+        datas['status'] = datas['state'] 
+        user_enterDepartmentNormal(datas)
+        return jsonify({
+            "code":1,
+            "msg":"管理员已"+ datas['status'] +"删除团队！"
         })
 
 @user.route('/queryMyApplications',methods = ['POST'])
@@ -227,7 +319,7 @@ def queryAllDepartments():
         totals = 0
         return jsonify({
             "code":-1,
-            "msg":"未检索到部门，请重新输入公司名称！"
+            "msg":"未检索到部门，请重新输入团队名称！"
         })
     else:
         totals = len(res)
@@ -245,7 +337,7 @@ def queryAllDepartments():
     if res is None:
         return jsonify({
             "code":-1,
-            "msg":"未检索到部门，请重新输入公司名称！"
+            "msg":"未检索到部门，请重新输入团队名称！"
         })
     return jsonify({
         "code":1,
@@ -264,7 +356,7 @@ def userInDepartment():
     if data is None:
         return jsonify({
             "code":-1,
-            "msg":"该用户未加入公司！"
+            "msg":"该用户未加入团队！"
         })
     else: 
         data = data[-1]
@@ -306,7 +398,7 @@ def userQuitDepartment():
     uid = 2
     data['uid'] = uid
     data['createtime'] = datetimeTmp
-    data['event'] = '员工申请退出公司'
+    data['event'] = '员工申请退出团队'
     data['description'] = '赞无描述'
     res = All_queryLog(data)
     if res is not None:
@@ -333,7 +425,7 @@ def userApplyDepartment():
     datas = data
     datas['createtime'] = datetimeTmp
     # datas['applytime'] = None
-    datas['event'] = '员工申请加入公司'
+    datas['event'] = '员工申请加入团队'
     datas['description'] = '赞无描述'
     res = All_queryLog(datas)
     if res is not None:
@@ -344,20 +436,20 @@ def userApplyDepartment():
                 "code":-1,
                 "msg":"已提交申请，请勿重复提交！"
             })
-        elif res['event'] == '员工申请加入公司' and res['state'] == '已处理':
+        elif res['event'] == '员工申请加入团队' and res['state'] == '已处理':
             return jsonify({
                 "code":-1,
-                "msg":"您已加入公司，请勿再次申请！"
+                "msg":"您已加入团队，请勿再次申请！"
             })
-        elif res['event'] == 'hr创建公司':
+        elif res['event'] == 'hr创建团队':
             if res['state'] == '已处理':
                 return jsonify({
                     "code":-1,
-                    "msg":"您已拥有公司，请勿申请！"
+                    "msg":"您已拥有团队，请勿申请！"
                 })
             return jsonify({
                 "code":-1,
-                "msg":"您的公司正在审批，请耐心等待！"
+                "msg":"您的团队正在审批，请耐心等待！"
             })
         else:
             User_addInDepartmentLog(datas)
@@ -409,13 +501,14 @@ def userMakeUpClock():
 
 @user.route('/workOverTime',methods = ['GET','POST']) #申请加班
 def userWorkOverTime():
-    uid = 1
+    # uid = 1
     data = json.loads(request.data)
     datetimeTmp = datetime.datetime.now().strftime('%y-%m-%d %H:%M:%S')
-    data['uid'] = uid
+
+    # data['uid'] = uid
     data['event'] = '员工申请加班'
     data['createtime'] = datetimeTmp
-
+    data['content'] = data['starttime'] + " " + data['endtime'] 
     res = User_WorkOverTime(data)
     if res is not None:
         return jsonify({
@@ -424,7 +517,7 @@ def userWorkOverTime():
         })
     return jsonify({
             "code":1,
-            "msg":"请假申请成功，请等待审核！"
+            "msg":"加班申请成功，请等待审核！"
         })
 
 @user.route('/userLeave',methods = ['GET','POST'])
@@ -433,7 +526,7 @@ def userLeave():
     datas = json.loads(request.data)
     dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     datas['create_time'] = dateTmp
-    datas['event'] = '员工请假'
+    datas['event'] = '员工申请请假'
     # datas['uid'] = uid
     res = User_Leave(datas)
     if res is not None:

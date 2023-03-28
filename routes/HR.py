@@ -154,7 +154,7 @@ def inviteUserJoinDepart():
         "msg":"邀请成功，请等待员工确认！"
     })
 
-@HR.route('/queryAllUsers',methods = ['POST'])  #暂未加入公司的人
+@HR.route('/queryAllUsers',methods = ['POST'])  #暂未加入团队的人
 def queryAllUsers():
     datas = json.loads(request.data)
     print(datas)
@@ -209,7 +209,7 @@ def applyDeleteDepartment():
     datas = json.loads(request.data)
     datetmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     datas['departmentid'] = int(datas['departmentid'])
-    datas['event'] = 'hr删除公司'
+    datas['event'] = 'hr删除团队'
     datas['createTime'] = datetmp
     datas['state'] = '待审批'
     
@@ -383,7 +383,7 @@ def updateDepartConfig():
     HR_updateDepartConfig(departid,datas)
     return jsonify({
         "code":1,
-        "msg":"恭喜你，系统配置修改成功!"
+        "msg":"恭喜你，修改成功!"
     })
 
 @HR.route('/addSysConfig',methods = ["POST","GET"])
@@ -423,13 +423,13 @@ def createDepartment():
     #             "msg":"用户编号错误！"
     #         })
     dateTmp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    if data['createTime'] is None:
+    if data['createTime'] is None or data['createTime'] == '':
         data['createTime'] = dateTmp
     else:
         data['createTime'] = datetime.datetime.strptime(data['createTime'], '%Y-%m-%d')
 
     data['state'] = '待审批'
-    data['event'] = 'boss创建公司'  # hr->boss
+    data['event'] = 'boss创建团队'  # hr->boss
     data['process_id'] = 0
     departid = random.randrange(100000,999999)
     print(departid)
@@ -437,10 +437,10 @@ def createDepartment():
     res= User_queryCreateLog(data)
     if res is not None:
         res = res[-1]
-        if res['event'] == "员工申请加入公司" or "hr创建公司":
+        if res['event'] == "员工申请加入团队" or "boss创建团队":
             return jsonify({
                 "code":-1,
-                "msg":"您正在加入或创建新公司，请勿重复提交！"
+                "msg":"您正在加入或创建新团队，请勿重复提交！"
             })
     # print(data['departmentName'],dateTmp,data['description'],HRname)
     data['rmb'] += '万'

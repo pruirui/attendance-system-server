@@ -1,4 +1,4 @@
-from models.user import Users,User_clocks
+from models.user import Users,User_clocks,Todos
 from models.shared import User_departments,Applications,Leaves
 from models.HR import HR_UserFace,HR_Department
 from db_config import session
@@ -115,11 +115,11 @@ class User_operation():
         return data_list
     
     def _userLeave(self,datas):  #请假
-        data = Applications.query.filter_by(sender_id=datas['uid'],state = '未审批',event='员工请假').first()
+        data = Applications.query.filter_by(sender_id=datas['uid'],state = '待审批',event='员工申请请假').first()
         if data is not None:
             return data
         new_data = Applications(sender_id=datas['uid'],create_time=datas['create_time'],content=datas['starttime']+datas['endtime'],\
-                          event=datas['event'],state = '未审批',department_id=datas['departmentid'])
+                          event=datas['event'],state = '待审批',department_id=datas['departmentid'],description=datas['description'])
         session.add(new_data)
         session.commit()
         # session.close()
@@ -132,7 +132,7 @@ class User_operation():
         if data is not None:
             return data
         
-        new_data = Applications(sender_id=datas['uid'],create_time=datas['createtime'],\
+        new_data = Applications(sender_id=datas['uid'],create_time=datas['createtime'],department_id=datas['departmentid'],\
                             event=datas['event'],description=datas['description'],state="待审批",content=datas['content'])
         session.add(new_data)
         session.commit()
@@ -217,19 +217,75 @@ class User_operation():
     def _queryApplicationById(self,id): #根据事项id查找内容
         res = Applications.query.filter_by(id=id).first()
         return res
+
+    def _addUserTodoLists(self,datas):
+        res = Todos(uid=datas['uid'],content=datas['content'],createTime=['createTime'],state=['status'])
+        session.add(res)
+        session.commit()
+        # return datas
+
+    def _updateUserTodoLists(self,datas):
+        res = Todos.query.filter_by(id=datas['id']).first()
+        res.content = datas['content']
+        res.state = datas['status']
+        db.session.commit()
+        # return datas
     
-    def _enterDepartmentNormal(self,datas): #处理个人审批事项（hr user admin）
-        if datas['event'] == '员工申请补打卡':
+    def _queryUserTodoLists(self,datas):
+        datas = Todos.query.filter(\
+            or_(and_(extract('month',Todos.createTime) == datas['month'],extract('year',Todos.createTime) == datas['year'],\
+                 extract('day',Todos.createTime) == datas['day']),Todos.state=='false')).\
+            filter(Todos.uid==datas['uid']).all()
+        return datas
+
+    def _queryFirstPage(self,datas): #获取用户首页信息
+        data1 = User_departments.query.filter_by(uid=datas['uid']).first()
+        data2 = User_clocks.query.filter_by(uid=datas['uid']).all()
+
+        return data1,data2
+    
+    def _enterDepartmentNormal(self,datas): #处理个人审批事项（hr user admin）、
+        if datas['event'] == 'hr删除团队':
             apply = Applications.query.filter_by(id=datas['id']).first()
             apply.apply_time = datas['apply_time']
             apply.state =datas['status']
+            apply.process_id = datas['uid']
+            db.session.commit()
+
+            if datas['status'] == '接受':
+                HR_Department.query.filter_by(departmentid=datas['departmentid']).delete()
+                db.session.commit()
+
+        elif datas['event'] == '员工申请加班':
+            apply = Applications.query.filter_by(id=datas['id']).first()
+            apply.apply_time = datas['apply_time']
+            apply.state =datas['status']
+            apply.process_id = datas['uid']
+            db.session.commit()
+
+        elif datas['event'] == '员工申请请假':
+            apply = Applications.query.filter_by(id=datas['id']).first()
+            apply.apply_time = datas['apply_time']
+            apply.state =datas['status']
+            apply.process_id = datas['uid']
+            db.session.commit()
+            # if datas['status'] == '接受':
+            #     new_data = User_clocks(uid=datas['uid'],note=datas['content'],clockTime=datas['date'])
+            #     session.add(new_data)
+            #     session.commit()
+
+        elif datas['event'] == '员工申请补打卡':
+            apply = Applications.query.filter_by(id=datas['id']).first()
+            apply.apply_time = datas['apply_time']
+            apply.state =datas['status']
+            apply.process_id = datas['hruid']
             db.session.commit()
             if datas['status'] == '接受':
                 new_data = User_clocks(uid=datas['uid'],note=datas['content'],clockTime=datas['date'])
                 session.add(new_data)
                 session.commit()
 
-        elif datas['event'] == 'boss创建公司':    # hr -> boss
+        elif datas['event'] == 'boss创建团队':    # hr -> boss
             apply = Applications.query.filter_by(id=datas['id']).first()
             apply.apply_time = datas['apply_time']
             apply.state =datas['status']
@@ -250,8 +306,9 @@ class User_operation():
             apply.state =datas['status']
             db.session.commit()
             if datas['status'] == '接受':
-                User_departments.query.filter_by(uid=datas['uid'],departmentid=datas['departmentid'],role='user').delete()
+                User_departments.query.filter_by(uid=datas['uid'],departmentid=datas['departmentid']).delete()
                 # session.add(new_data)
+                HR_UserFace.query.filter_by(id=datas['uid']).delete()
                 db.session.commit()
             else:
                 return
@@ -283,7 +340,7 @@ class User_operation():
                 User_departments.query.filter_by(uid=datas['uid'],departmentid=datas['departmentid']).delete()
                 db.session.commit()
 
-    # def _RefuseEnterDepartmentNormal(self,datas): #拒绝员工进入公司
+    # def _RefuseEnterDepartmentNormal(self,datas): #拒绝员工进入团队
     #     apply = Applications.query.filter_by(id=datas['id']).first()
     #     apply.apply_time = datas['apply_time']
     #     apply.process_id = datas['HRuid']
@@ -291,3 +348,4 @@ class User_operation():
     #     db.session.commit()
         
     #     userdepart
+    

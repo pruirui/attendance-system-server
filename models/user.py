@@ -28,4 +28,11 @@ class User_clocks(db.Model):
     note = db.Column(db.String(45), nullable=False)
 
 
+class Todos(db.Model):
+    __tablename__ = 'todos'
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    uid = db.Column(db.Integer, nullable=False)
+    content = db.Column(db.String(445), nullable=False)
+    state = db.Column(db.String(45), nullable=False)
+    createTime = db.Column(db.Date, nullable=False)
 
