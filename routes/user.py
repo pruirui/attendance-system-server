@@ -13,9 +13,22 @@ import datetime,os
 import base64
 from face.face_recognition import getFaceEmbedding,getdistance
 
+@user.route('/isUidInDepartment',methods = ['POST'])
+def isUidInDepartment():
+    datas = json.loads(request.data)
+    res = User_isUidInDepartment(datas)
+    res = True if res else False
+    return jsonify({
+        "code":1,
+        "data":{
+            "flag":res
+        }
+    })
+
 @user.route('/addTodoLists',methods = ['POST'])
 def addTodoLists():
     datas = json.loads(request.data)
+    print("datas",datas)
     datetmp = datetime.date.today().strftime("%Y-%m-%d")
     datas['createTime'] = datetmp
     res = User_addTodoLists(datas)
@@ -43,6 +56,15 @@ def userTodoLists():
     datas['month'] = datetmp.split('-')[1]
     datas['day'] = datetmp.split('-')[2]
     res = User_queryTodoLists(datas)
+    print(res)
+    if res is None:
+        res = []
+    else:
+        res = sorted(res, key=lambda item: (item['createTime'],item['state']))
+        print(res)
+        # res = res[::-1]
+        for it in res:
+            it['status'] = True if it['state'] == '1' else False
     return jsonify({
         "code":1,
         "data":res
@@ -740,6 +762,7 @@ import numpy as np
 def clockOut():
     # username = "lee"
     # uid = 9
+    superuid = request.form['uid']
     temp = 8888
     # if request.files.get('file') is None:
     #     return jsonify({
@@ -772,7 +795,8 @@ def clockOut():
         print(distance)
         #匹配人脸
         if  distance:
-           
+            if data['id'] != superuid:
+                continue
             #查询用户个人信息
             uid = data['id']
             print(uid)
@@ -835,6 +859,7 @@ def clockOut():
 def clockIn():
     # username = "lee"
     # uid = 9
+    # superuid = request.form['uid']
     temp = 8888
     # if request.files.get('file') is None:
     #     return jsonify({

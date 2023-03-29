@@ -157,7 +157,7 @@ def generator():
                 #     VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s","%s", "%s", "%s","%s", "%s", "%s", "%s","%s"); \
                 #     ' % (departmentid,uid,create_time,stat,descri,departmentname,hourpay,workOverPay,workOverLimit,\
                 #          startTime,endTime,workdays,phone,address,rmb))
-                departmentid = 191406
+                departmentid = 52138690
                 cursor.execute(' \
                     INSERT INTO `user_departments` (uid,departmentid,role,indate,state)\
                     VALUES (%s, %s, "%s", "%s", "%s"); \
@@ -182,14 +182,14 @@ def generator():
                     clockOutTime = randomtimes(startOut,endOut,1)
                     # print(clockTime)
                     tmp = random.randrange(100)
-                    if tmp >= 10:
+                    if tmp >= 5:
                         cursor.execute(' \
                             INSERT INTO `user_clocks` (uid,clockTime,note)\
                             VALUES ( %s, "%s", "%s"); \
                             ' % (uid,clockInTime,'签到'))
                     
                     tmp = random.randrange(100)
-                    if tmp >= 10:
+                    if tmp >= 5:
                         cursor.execute(' \
                             INSERT INTO `user_clocks` (uid,clockTime,note)\
                             VALUES ( %s, "%s", "%s"); \

@@ -2,6 +2,13 @@ from operation.user import User_operation
 from utils.data_process import Class_To_Data,query2dict,time2string
 # from db_config import session
 
+def User_isUidInDepartment(datas):
+    u_o = User_operation()
+    data = u_o._isUidInDepartment(datas)
+    if data is not None:
+        data = query2dict(data)
+    return data
+
 def User_addTodoLists(datas):
     u_o = User_operation()
     data = u_o._addUserTodoLists(datas)

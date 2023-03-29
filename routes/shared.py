@@ -46,6 +46,7 @@ def processUserClockData(datas,resIn,resOut):
     print("wage",wages)
     wages *= float(depart_data[0]['hourPay'])
     print("wage",wages)
+    ooo = float(depart_data[0]['workOverPay'])
     makeUp,workOver = User_queryOtherDatasLog(datas)
     if makeUp is None:
         makeUp = []
@@ -115,7 +116,7 @@ def processUserClockData(datas,resIn,resOut):
     tmp["weidaka"] = allout
     tmp["chidao"] = late
     tmp["zaotui"] = advance
-    tmp['xinzi'] = wages
+    tmp['xinzi'] = round((wages * float(allin / float(allin + allout +late + advance)) + len(makeUp) * ooo),2)
     tmp['jiaban'] = len(makeUp)
     tmp['qingjia'] = len(workOver)
     res['bing'] = tmp

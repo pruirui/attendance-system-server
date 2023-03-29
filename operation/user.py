@@ -218,8 +218,13 @@ class User_operation():
         res = Applications.query.filter_by(id=id).first()
         return res
 
+    def _isUidInDepartment(self,datas):
+        res = User_departments.query.filter_by(uid=datas['uid'],departmentid=datas['departmentid']).first()
+        return res
+
+
     def _addUserTodoLists(self,datas):
-        res = Todos(uid=datas['uid'],content=datas['content'],createTime=['createTime'],state=['status'])
+        res = Todos(uid=datas['uid'],content=datas['content'],createTime=datas['createTime'],state=datas['status'])
         session.add(res)
         session.commit()
         # return datas
@@ -234,7 +239,7 @@ class User_operation():
     def _queryUserTodoLists(self,datas):
         datas = Todos.query.filter(\
             or_(and_(extract('month',Todos.createTime) == datas['month'],extract('year',Todos.createTime) == datas['year'],\
-                 extract('day',Todos.createTime) == datas['day']),Todos.state=='false')).\
+                 extract('day',Todos.createTime) == datas['day']),Todos.state=='0')).\
             filter(Todos.uid==datas['uid']).all()
         return datas
 

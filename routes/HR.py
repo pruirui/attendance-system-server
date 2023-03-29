@@ -17,6 +17,30 @@ HR = Blueprint('HR',__name__)
 #     departusers = HR_FindAllUsersInDepartment(datas)
 #     for user in departusers:
 
+@HR.route('/exportExcel',methods = ['POST'])
+def exportExcel():
+    datas = json.loads(request.data)
+    datas['year'] = int(datas['months'].split('-')[0])
+    datas['month'] = int(datas['months'].split('-')[1])
+    datas['querystring'] = ''
+    res = HR_FindAllUsersInDepartment(datas)
+    for ittt in res:  #去掉boss
+        if ittt['role'] == 'boss':
+            res.remove(ittt)
+    exceldatas = []
+    for it in res:
+        datas['uid'] = it['id']
+        resIn,resOut = User_ClockData(datas)  #签到签退数据
+        userClockRes = processUserClockData(datas,resIn,resOut)
+        userdata = User_BaseData(datas['uid'])
+        userClockRes['phone'] = userdata['phone']
+        userClockRes['username'] = userdata['username']
+        exceldatas.append(userClockRes)
+    return jsonify({
+        "code":1,
+        "data":exceldatas
+    })
+
 @HR.route('/allDepartmentsClockData',methods = ['POST'])
 def allDepartmentsClockData():
     datas = json.loads(request.data)
