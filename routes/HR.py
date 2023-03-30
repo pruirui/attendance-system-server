@@ -103,6 +103,7 @@ def allDepartmentsClockData():
             tmp['dakaRate'] = dakaRate
             tmp['weidakaRate'] = weidakaRate
             tmp['zaotuiRate'] = zaotuiRate
+            wagesAll = round(wagesAll,2)
             chidaoRateAll += round(chidaoSum / daysSum,4)
             dakaRateAll += round(dakaSum / daysSum,4)
             weidakaRateAll += round(weidakaSum / daysSum,4)
@@ -121,9 +122,10 @@ def allDepartmentsClockData():
         tmp["weidaka"] = weidakaRateAll
         tmp["chidao"] = chidaoRateAll
         tmp["zaotui"] = zaotuiRateAll
-        tmp['xinzi'] = 0
-        tmp['jiaban'] = 0
-        tmp['qingjia'] = 0
+        print("wagesAll",wagesAll)
+        tmp['xinzi'] = wagesAll
+        tmp['jiaban'] = workOverAll
+        tmp['qingjia'] = makeUpAll
         resAllDepartments['kapian'] = tmp
         tmp = {}
         tmp["daka"] = dakaSumAll

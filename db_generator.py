@@ -157,7 +157,8 @@ def generator():
                 #     VALUES ("%s", "%s", "%s", "%s", "%s", "%s", "%s","%s", "%s", "%s","%s", "%s", "%s", "%s","%s"); \
                 #     ' % (departmentid,uid,create_time,stat,descri,departmentname,hourpay,workOverPay,workOverLimit,\
                 #          startTime,endTime,workdays,phone,address,rmb))
-                departmentid = 52138690
+                uid = 9
+                departmentid = 191406
                 cursor.execute(' \
                     INSERT INTO `user_departments` (uid,departmentid,role,indate,state)\
                     VALUES (%s, %s, "%s", "%s", "%s"); \

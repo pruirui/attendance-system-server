@@ -193,7 +193,7 @@ class User_operation():
                                 HR_Department.departmentName,HR_Department.hourPay,HR_Department.workOverLimit,HR_Department.workOverPay,\
                                     HR_Department.startTime,HR_Department.endTime,HR_Department.workdays,\
                                     HR_Department.address,HR_Department.rmb,HR_Department.phone,Users.username)\
-                                        .filter(HR_Department.HRuid==Users.id).\
+                                        .filter(HR_Department.HRuid==Users.id).filter(Users.id != 0).\
                                             filter(or_(HR_Department.departmentName.like('%'+ datas['departmentName']+'%'),Users.username.like('%'+ datas['departmentName']+'%')))\
                                                    .filter(HR_Department.address.like('%'+ datas['address']+'%')).all()
         
@@ -301,7 +301,7 @@ class User_operation():
                 session.add(new_data)
                 session.commit()
 
-                data = HR_Department.query.fiter_by(departmentid=datas['departmentid']).first()
+                data = HR_Department.query.filter_by(departmentid=datas['departmentid']).first()
                 data.state = '已注册'
                 db.session.commit()
         

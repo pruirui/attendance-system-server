@@ -4,7 +4,7 @@ from collections import defaultdict
 import hashlib
 import random
 from flask import Blueprint,request,jsonify
-user = Blueprint('user',__name__)
+user = Blueprint('user',__name__,static_folder='images',static_url_path="/images")
 
 from api.user import *
 from api.shared import *
@@ -74,6 +74,7 @@ def userTodoLists():
 def firstPage():
     data = json.loads(request.data)
     res1,res2 = User_queryFirstPage(data)
+    print('res2',res2)
     if res2 is None:
         res2 = 0
     else :
@@ -89,6 +90,7 @@ def firstPage():
         date2 = datetime.datetime.strptime(date2, "%Y-%m-%d")
         datein = (date2 - date1).days
         tmp = datein * 2 - (res2)
+    print("datein",datein)
     return jsonify({
         "code":1,
         "data":{
@@ -237,7 +239,7 @@ def queryMyApplications():
     else:
         # print(depart)
         for it in depart:
-            if it['role'] == 'boss':
+            if it['role'] == 'boss' or it['role'] == 'hr':
                 idlist.append(it['departmentid'])
         # idlist = [it['departmentid'] for it in dapart if it['role'] == 'hr']
         # print("idlist",type(idlist[0]))
@@ -762,7 +764,8 @@ import numpy as np
 def clockOut():
     # username = "lee"
     # uid = 9
-    superuid = request.form['uid']
+    # superuid = request.form['uid']
+    # print('superuid',superuid)
     temp = 8888
     # if request.files.get('file') is None:
     #     return jsonify({
@@ -795,8 +798,8 @@ def clockOut():
         print(distance)
         #匹配人脸
         if  distance:
-            if data['id'] != superuid:
-                continue
+            # if data['id'] != superuid:
+            #     continue
             #查询用户个人信息
             uid = data['id']
             print(uid)

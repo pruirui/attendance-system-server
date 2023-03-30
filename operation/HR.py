@@ -127,9 +127,9 @@ class HR_operation():
         
         db.session.commit()
 
-    def _queryAllUsers(self,datas): #查询所有没有加入公司的用户
+    def _queryAllUsers(self,datas): #查询所有没有加入团队的用户
         res = db.session.query(Users.username,Users.phone,Users.birthday,Users.password,Users.address,Users.motto,Users.gender,\
-                                 Users.id,Users.home,Users.headshot,Users.email).\
+                                 Users.id,Users.home,Users.headshot,Users.email).filter(Users.id != 0).\
                                     filter(or_(Users.phone.like('%'+ datas['querystring'] +'%'),Users.username.like('%'+ datas['querystring'] +'%')))
 
         res2 = (db.session.query(Users.username,Users.phone,Users.birthday,Users.password,Users.address,Users.motto,Users.gender,\
